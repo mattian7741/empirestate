@@ -4,6 +4,8 @@ Each document in this folder is **narrowly scoped** to one component or bounded 
 
 **Product truth (what/why):** `empirestate/BILLING.md`, `empirestate/app-documentation/SKU-and-Cart.md`, `empirestate/app-documentation/Payux.md`.
 
+**Functional behavior (UX, flows, boundaries in English):** `../funcspec/` — e.g. [PAYUX functional spec](../funcspec/PAYUX.md) before implementation detail here.
+
 **Agent handoff:** Pair any design doc with `GUIDE.md` for EmpireStack-wide constraints. Obey `empirestate/TENETS.md` — **1** VCS always; **2–3** scaffolding then lean; **4–5** deploy and iterate live; **7–14** when writing or changing docs.
 
 ---
@@ -31,7 +33,7 @@ PAYUX.md — payment → receipt (ledger)
 SHOPPING-CART.md (continued) — receipt to host → grant entitlements + provenance
 ```
 
-**Suggested reading order for a full checkout implementer:** `SKU-MANAGEMENT.md` → `SHOPPING-CART.md` → `PAYUX.md` (Payux can be read first if billing-only).
+**Suggested reading order for a full checkout implementer:** `SKU-MANAGEMENT.md` → `SHOPPING-CART.md` → `../funcspec/PAYUX.md` (what Payux is/is not) → `PAYUX.md` (Payux billing-only implementers: funcspec → `PAYUX.md`).
 
 ---
 
@@ -40,6 +42,7 @@ SHOPPING-CART.md (continued) — receipt to host → grant entitlements + proven
 | Layer | Location | Role |
 |-------|----------|------|
 | Product spec | `empirestate/` | What and why; ecosystem boundaries. |
+| **Functional spec** | `funcspec/` | Per-app behavior, UX, and boundary narration in English. |
 | Engineering spec | `core-platform-spec/` | Contracts, policies, formal sections. |
 | **Detailed design** | `design/` | Scoped blueprint per component; implementation-ready. |
 
@@ -49,7 +52,7 @@ SHOPPING-CART.md (continued) — receipt to host → grant entitlements + proven
 
 | File | Component | Summary |
 |------|-----------|---------|
-| **PAYUX.md** | Billing (Payux) | **Invoice → payment → receipt**; centralized ledger; opaque metadata; no commerce semantics. M1 priority. |
+| **PAYUX.md** | Billing (Payux) | **Invoice → payment → receipt**; centralized ledger; opaque metadata; no commerce semantics. M1 priority. **Product/UX:** `../funcspec/PAYUX.md`. |
 | **SKU-MANAGEMENT.md** | SKU management | Maps **products / services / purchasable offers** (from host) to **SKUs** and **prices**; price resolution; no payment rails. |
 | **SHOPPING-CART.md** | Shopping cart | **Cart** lines, **balance**, **invoice** assembly; calls Payux; handles **receipt** return and **entitlement-grant handoff** to host (with receipt/gift provenance). |
 

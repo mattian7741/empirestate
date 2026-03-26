@@ -30,4 +30,4 @@
 
 13. **Interpret inputs into coherent spec.** Submissions inform the record; the record is **synthesized**, not a verbatim transcript.
 
-14. **Layer documentation by role.** `empirestate/` holds compact **product truth**. `design/` holds **slice-specific build contracts**. Do not repeat roadmap or backlog storytelling in every file unless that file adds **new** signal—**pointer + delta** only.
+14. **Layer documentation by role.** `empirestate/` holds compact **product truth**. `funcspec/` holds per-application **functional** behavior and UX (English). `design/` holds **slice-specific build contracts**. Do not repeat roadmap or backlog storytelling in every file unless that file adds **new** signal—**pointer + delta** only.

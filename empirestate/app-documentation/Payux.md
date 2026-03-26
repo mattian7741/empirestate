@@ -6,4 +6,6 @@ The **billing** application: **invoice** (amount due from cart) → **payment** 
 
 **Companion:** [[SKU-and-Cart]] (SKU ↔ product/service/entitlement, prices, cart, invoice).
 
+**Functional specification (behavior & UX, gateway isolated from cart/SKU/product):** [PAYUX functional spec](../../funcspec/PAYUX.md).
+
 **Implementation design:** [Design index](../../design/README.md); [PAYUX](../../design/PAYUX.md); companion [SKU management](../../design/SKU-MANAGEMENT.md), [shopping cart](../../design/SHOPPING-CART.md).

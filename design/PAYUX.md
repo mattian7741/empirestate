@@ -159,6 +159,7 @@ Verify webhooks; HTTPS redirects; rate-limit session creation; never trust `meta
 
 | Topic | Document |
 |-------|----------|
+| **Functional spec (UX, flows, isolation from cart/SKU)** | `funcspec/PAYUX.md` |
 | Billing ecosystem | `empirestate/BILLING.md` |
 | Cart / SKU companion | `empirestate/app-documentation/SKU-and-Cart.md` |
 | SKU management design | `design/SKU-MANAGEMENT.md` |

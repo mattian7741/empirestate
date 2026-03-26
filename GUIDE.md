@@ -15,10 +15,11 @@ EmpireStack is a universal software architecture—event-driven nano services, d
 | Location | Role | When to use |
 |----------|------|-------------|
 | **empirestate/** | Product spec. Defines ideal solution, aspects, roadmap. TPM audience. | Context, strategic direction, aspect behavior. |
+| **funcspec/** | Per-application **functional** specs: flows, UX ownership, boundaries in English. | Before `design/` when clarifying what an app does for users and integrators. |
 | **core-platform-spec/** | Engineering spec. Contracts, policies, formal sections. Engineer audience. | Implementation constraints, APIs, coding rules. |
 | **core-documentation/** | Dev workflow, doc standards, coding overlay. Commutes across projects. | Process, conventions, deployment/coding patterns. |
 
-**Principle:** empirestate = *what* and *why*; core = *how*. There is overlap; both matter for implementation.
+**Principle:** empirestate = *what* and *why*; core = *how*; **funcspec** = per-app *behavior and UX*; **design** = *build contract* for a slice. Overlap is expected; pick the shallowest doc that answers the question.
 
 **Fast path (platform only, no app catalog):** `concise/README.md`
 
@@ -83,12 +84,14 @@ EmpireStack is a universal software architecture—event-driven nano services, d
 | **App index** | `empirestate/APPLICATIONS.md`, `empirestate/app-documentation/README.md` | One doc per app. Payux and OpenErgo only in roadmap; others reference. |
 | **SKU + cart** | `empirestate/app-documentation/SKU-and-Cart.md` | Maps domain catalog to SKUs/prices; basket; invoice to Payux. |
 | **Payux** | `empirestate/app-documentation/Payux.md`, `empirestate/BILLING.md` | M1. Billing: invoice in, receipt out. |
+| **Payux functional spec** | `funcspec/PAYUX.md` | UX, flows; Payux isolated from cart, SKU, catalog, entitlements. |
 | **Payux detailed design** | `design/PAYUX.md` | Implementation handoff: API, ledger, adapters, sequencing. |
 
 ### Detailed design (implementation handoffs)
 
 | Topic | Document | Key points |
 |-------|----------|------------|
+| **Funcspec folder** | `funcspec/README.md` | Functional specs index; pair with `design/` per app. |
 | **Design folder** | `design/README.md` | Commerce + billing stack index; reading order; cross-cutting rules. |
 | **Payux** | `design/PAYUX.md` | Invoice → payment → receipt; ledger; Payux API. |
 | **SKU management** | `design/SKU-MANAGEMENT.md` | Catalog → SKU + price; `prices/resolve`; no cart or payment. |
@@ -115,7 +118,7 @@ When implementing, respect:
 
 ## When Unclear
 
-- **Behavior / requirements** → `empirestate/` aspect docs (LEDGER, IDENTITY, BILLING, OPENERGO, DEPLOYMENT).
+- **Behavior / requirements** → `empirestate/` aspect docs (LEDGER, IDENTITY, BILLING, OPENERGO, DEPLOYMENT); per-app UX and flows → `funcspec/`.
 - **Implementation detail / contracts** → `core-platform-spec/` sections and `contracts/`, `policies/`.
 - **Process / workflow** → `core-documentation/DEVELOPMENT_GUIDE.md`, `CODING_STANDARDS.md`.
 - **Iteration order** → `empirestate/ROADMAP.md`, `empirestate/BACKLOG.md`.
