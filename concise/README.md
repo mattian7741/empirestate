@@ -2,7 +2,9 @@
 
 Dense view of **core infrastructure and strategy**. **Excludes** consuming applications and the `empirestate/app-documentation/` catalog.
 
-**Full corpus:** `../empirestate/` • **Implementation handoffs:** `../design/` • **Engineering spec:** `../core-platform-spec/` • **Agent orientation:** `../GUIDE.md`
+**Navigation:** Read [`../GUIDE.md`](../GUIDE.md) first for how to use the corpus. **Full corpus:** `../empirestate/` • **Implementation handoffs:** `../design/` • **Engineering spec:** `../core-platform-spec/`
+
+`concise/` is a digest only; **`empirestate/TENETS.md`** remains mandatory for implementation discipline.
 
 | File | Contents |
 |------|----------|

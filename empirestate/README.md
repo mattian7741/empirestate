@@ -2,6 +2,8 @@
 
 This folder contains the canonical documentation for EmpireStack—the source of truth and record for project specification.
 
+**How this folder fits the full repo:** See [`../GUIDE.md`](../GUIDE.md) (reading order, Payux pack, corpus map).
+
 ## Purpose
 
 Documentation here is **not** end-user or developer documentation. Those are generated as renderings from specific lenses into this corpus. This documentation captures facts concisely as isolated aspects that combine for rich multidimensional significance.

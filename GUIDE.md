@@ -1,124 +1,157 @@
-# EmpireStack — AI Agent Guide
+# How to use this documentation
 
-This document orients a new AI agent session to the EmpireStack documentation. Use it to locate principles, constraints, and implementation guidance. When implementing, adhere to the specifications referenced here.
-
----
-
-## Purpose
-
-EmpireStack is a universal software architecture—event-driven nano services, distributed ledger, identity, billing, deployment—unified into one coherent stack. Documentation is organized into **product specification** (what/why) and **engineering specification** (how). You should leverage both.
+**This file (`GUIDE.md`) is the entry point for humans and AI agents.** It explains **what to read, in what order, and why**, so implementation matches the philosophies and structure of the corpus. It does not duplicate every rule; it **routes** you to the right documents.
 
 ---
 
-## Documentation Structure
+## 1. Always anchor on philosophy first
 
-| Location | Role | When to use |
-|----------|------|-------------|
-| **empirestate/** | Product spec. Defines ideal solution, aspects, roadmap. TPM audience. | Context, strategic direction, aspect behavior. |
-| **funcspec/** | Per-application **functional** specs: flows, UX ownership, boundaries in English. | Before `design/` when clarifying what an app does for users and integrators. |
-| **core-platform-spec/** | Engineering spec. Contracts, policies, formal sections. Engineer audience. | Implementation constraints, APIs, coding rules. |
-| **core-documentation/** | Dev workflow, doc standards, coding overlay. Commutes across projects. | Process, conventions, deployment/coding patterns. |
+| Priority | Document | Why |
+|----------|----------|-----|
+| **1** | **`empirestate/TENETS.md`** | **Authoritative enumerated constraints.** Order = significance (1 = highest). Governs VCS, architecture fit, lean scope, deploy/iterate live, billing early, and how documentation is written. **Do not skip.** When two guidance sources conflict, **lower tenet numbers win**. |
+| **2** | **`empirestate/OVERVIEW.md`** | The five **scaffolding aspects** so work “slots” into the right place. |
+| **3** | **`empirestate/ROADMAP.md`** + **`empirestate/BACKLOG.md`** | **What comes when** and iteration-level tasks for the **platform** (not every host app). |
 
-**Principle:** empirestate = *what* and *why*; core = *how*; **funcspec** = per-app *behavior and UX*; **design** = *build contract* for a slice. Overlap is expected; pick the shallowest doc that answers the question.
-
-**Fast path (platform only, no app catalog):** `concise/README.md`
+**`concise/`** ([`concise/README.md`](concise/README.md)) is an **optional fast path**: dense platform-only summary (aspects, roadmap table, pointers to full `TENETS.md`). Use it for quick context; it **does not replace** `empirestate/TENETS.md` for implementation discipline.
 
 ---
 
-## Where to Find Important Information
+## 2. Starting **Payux** implementation
 
-### Core Principles (read first)
+Use this ordered pack when kicking off Payux (M1) or handing work to an agent:
 
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **Tenets** | `empirestate/TENETS.md` | **14 enumerated commandments (order = significance):** **source control first (1)**, scaffolding (**2**), lean (**3**), deploy + iterate live (**4–5**), billing early (**6**), documentation (**7–14**). |
-| **Overview** | `empirestate/OVERVIEW.md` | Five aspects: OpenErgo, Ledger, Identity, Billing, Deployment. |
-| **Roadmap** | `empirestate/ROADMAP.md` | M1 Payux, M2 Deployment, M3 OpenErgo, M4 Identity, M5 Ledger, M6 Viral. Billing first. |
+| Step | Read |
+|------|------|
+| 1 | **`empirestate/TENETS.md`** — execution rules (**1–6**) and doc rules (**7–14**) |
+| 2 | **`empirestate/BILLING.md`** — ecosystem boundary: invoice/receipt, cart/SKU/host **not** inside Payux |
+| 3 | **`funcspec/PAYUX.md`** — **what** Payux does for users/integrators; **UX ownership**; gateway isolated from catalog/cart |
+| 4 | **`design/PAYUX.md`** — **how** to build: APIs, ledger, **pluggable processor** (M1 Stripe blackbox), sequencing |
+| 5 | **`empirestate/STANDARDS.md`** + **`core-platform-spec/policies/NO_ORM_POLICY.md`** — data/accessor discipline |
+| 6 | **`core-platform-spec/contracts/`** as needed — logging, errors, identity envelope, etc. |
+| 7 | **`empirestate/DEPLOYMENT.md`** + **`core-platform-spec/02_SECTION02.md`** — deploy expectations |
 
-### Implementation Standards
+**Do not** treat SKU, cart, or product specs as Payux requirements; those live in **`design/SHOPPING-CART.md`**, **`design/SKU-MANAGEMENT.md`**, and **`empirestate/app-documentation/SKU-and-Cart.md`**.
 
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **Coding standards** | `empirestate/STANDARDS.md` | No ORM as abstraction (accessor blackbox OK). SQL/NoSQL/event streams all valid; right tool for job. OOP + pure functions. Strong typing. Interface-first. Python preferred. |
-| **No ORM policy** | `core-platform-spec/policies/NO_ORM_POLICY.md` | Accessor interface is contract; ORM behind blackbox is implementation detail. |
-| **One class per file** | `core-platform-spec/policies/ONE_CLASS_PER_FILE.md` | One primary public construct per file; flat structures. |
-| **Coding overlay** | `core-documentation/CODING_STANDARDS.md` | Git hygiene, deployment prerequisite, state over change, payload schemata. |
+---
+
+## 3. Starting **any other** new project or component
+
+| Step | Read |
+|------|------|
+| 1 | **`empirestate/TENETS.md`** |
+| 2 | **`empirestate/OVERVIEW.md`** — which **aspect(s)** the work belongs to |
+| 3 | Relevant **aspect doc(s)** in `empirestate/` (e.g. `LEDGER.md`, `IDENTITY.md`, `DEPLOYMENT.md`, `OPENERGO.md`) |
+| 4 | If the component is a named app: **`funcspec/<APP>.md`** when it exists, then **`design/<APP>.md`** (or equivalent) when it exists |
+| 5 | **`empirestate/STANDARDS.md`** + **`core-platform-spec/`** policies and contracts that apply |
+| 6 | **`empirestate/ROADMAP.md` / `BACKLOG.md`** — only if the work tracks **platform** milestones |
+
+If there is **no** `funcspec` or `design` file yet, product truth still lives in **`empirestate/`**; add scoped specs when the slice is firm enough (**Tenets 7–14**: one home per fact, link the rest).
+
+---
+
+## 4. What each library is for
+
+| Location | Role | When to open it |
+|----------|------|-----------------|
+| **`empirestate/`** | Product spec: **what** and **why**—aspects, tenets, roadmap, billing philosophy. | Strategy, boundaries, “is this Payux’s job?” |
+| **`funcspec/`** | Per-application **functional** spec: flows, UX, plain-English behavior. | Before coding: what users/integrators experience |
+| **`design/`** | **Implementation handoff** for a bounded slice: APIs, persistence, sequencing. | While building: concrete build contract |
+| **`core-platform-spec/`** | Engineering spec: contracts, policies, numbered sections. | Cross-cutting **how** and compliance |
+| **`core-documentation/`** | Dev workflow, coding overlay, doc conventions. | Process and day-to-day engineering habits |
+| **`concise/`** | Short platform-only digest; links outward. | Quick orientation; **not** a substitute for **TENETS** |
+
+**Principle:** Pick the **shallowest** document that answers the question; **link** instead of duplicating (**Tenet 8–9**).
+
+---
+
+## 5. Where to find common topics
+
+### Core principles
+
+| Topic | Document |
+|-------|----------|
+| **Tenets** | `empirestate/TENETS.md` |
+| **Aspects (scaffolding)** | `empirestate/OVERVIEW.md` |
+| **Roadmap / backlog** | `empirestate/ROADMAP.md`, `empirestate/BACKLOG.md` |
+
+### Implementation standards
+
+| Topic | Document |
+|-------|----------|
+| **Coding standards** | `empirestate/STANDARDS.md` |
+| **No ORM policy** | `core-platform-spec/policies/NO_ORM_POLICY.md` |
+| **One class per file** | `core-platform-spec/policies/ONE_CLASS_PER_FILE.md` |
+| **Coding overlay** | `core-documentation/CODING_STANDARDS.md` |
 
 ### Contracts (cross-boundary)
 
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **Identity** | `core-platform-spec/contracts/identity.md` | Tenant, principal, logical vs physical silos, white-listing for commuting. |
-| **Logging** | `core-platform-spec/contracts/logging-schema.md` | Structured JSON, correlation_id, minimum fields. |
-| **Error codes** | `core-platform-spec/contracts/error-codes.md` | AUTH, VALIDATION, NOT_FOUND, etc. Canonical envelope. |
-| **Audit events** | `core-platform-spec/contracts/audit-event.md` | actor, target, action, timestamp, correlation_id. |
-| **Projection pattern** | `core-platform-spec/contracts/projection-pattern.md` | Migrations, accessors, idempotency keys, tenant scope. |
+| Topic | Document |
+|-------|----------|
+| Identity | `core-platform-spec/contracts/identity.md` |
+| Logging | `core-platform-spec/contracts/logging-schema.md` |
+| Errors | `core-platform-spec/contracts/error-codes.md` |
+| Audit | `core-platform-spec/contracts/audit-event.md` |
+| Projection / accessors | `core-platform-spec/contracts/projection-pattern.md` |
 
 ### Aspects (domain behavior)
 
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **OpenErgo** | `empirestate/OPENERGO.md` | Transport-agnostic substrate. Kafka/RMQ is example stack; many transports supported. |
-| **Ledger** | `empirestate/LEDGER.md` | Ledger pattern: append-only, immutable, projection-derived. Applied to financial, claims, social, record-based. Datastore topology (distributed vs centralized) is application-dependent. |
-| **Identity** | `empirestate/IDENTITY.md` | Participation-first, roundtrip auth, commuting identity. Logical silos default; physical opt-in; white-list for sharing. |
-| **Billing** | `empirestate/BILLING.md` | Invoice → payment → receipt; opaque metadata only. App owns products/services + entitlements (backref receipt/gift); SKU manager maps to SKUs/prices. Uses ledger pattern. |
-| **Deployment** | `empirestate/DEPLOYMENT.md` | Target-agnostic, declarative, Docker. Automation stands alone; IaC; layered model (intent → Ansible → containers → libraries). |
+| Topic | Document |
+|-------|----------|
+| OpenErgo | `empirestate/OPENERGO.md` |
+| Ledger | `empirestate/LEDGER.md` |
+| Identity | `empirestate/IDENTITY.md` |
+| Billing | `empirestate/BILLING.md` |
+| Deployment | `empirestate/DEPLOYMENT.md` |
+| Viral invite | `empirestate/VIRAL.md` |
 
-### Data Architecture
+### Data & deployment (deeper)
 
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **Data stores** | `empirestate/STANDARDS.md` (§ Data Stores), `core-platform-spec/06_SECTION06.md` | SQL, NoSQL, event streams valid. Kafka = event SSOT; RabbitMQ = ephemeral router (example). Right tool for job; no wrong-domain substitution. |
-| **Sync model** | `empirestate/LEDGER.md` (§ Sync Model), `core-platform-spec/09_SECTION09.md` | Application-specific. Real-time (central+bus or distributed) or disconnected (local→central or local→distributed). 3-layer model: real-time, delta, reconciliation. |
+| Topic | Document |
+|-------|----------|
+| Data stores | `empirestate/STANDARDS.md`, `core-platform-spec/06_SECTION06.md` |
+| Sync | `empirestate/LEDGER.md`, `core-platform-spec/09_SECTION09.md` |
+| Deploy layers | `empirestate/DEPLOYMENT.md`, `core-platform-spec/02_SECTION02.md` |
 
-### Deployment
+### Applications & Payux stack
 
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **Deployment** | `empirestate/DEPLOYMENT.md`, `core-platform-spec/02_SECTION02.md` | Layered: intent → state-realizing (e.g. Ansible) → deploy ops → Docker → libraries. Ansible is current choice, not fixed. Automation stands alone; determinism drives deployments. |
-
-### Applications
-
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **App index** | `empirestate/APPLICATIONS.md`, `empirestate/app-documentation/README.md` | One doc per app. Payux and OpenErgo only in roadmap; others reference. |
-| **SKU + cart** | `empirestate/app-documentation/SKU-and-Cart.md` | Maps domain catalog to SKUs/prices; basket; invoice to Payux. |
-| **Payux** | `empirestate/app-documentation/Payux.md`, `empirestate/BILLING.md` | M1. Billing: invoice in, receipt out. |
-| **Payux functional spec** | `funcspec/PAYUX.md` | UX, flows; Payux isolated from cart, SKU, catalog, entitlements. |
-| **Payux detailed design** | `design/PAYUX.md` | Implementation handoff: API, ledger, adapters, sequencing. |
-
-### Detailed design (implementation handoffs)
-
-| Topic | Document | Key points |
-|-------|----------|------------|
-| **Funcspec folder** | `funcspec/README.md` | Functional specs index; pair with `design/` per app. |
-| **Design folder** | `design/README.md` | Commerce + billing stack index; reading order; cross-cutting rules. |
-| **Payux** | `design/PAYUX.md` | Invoice → payment → receipt; ledger; Payux API. |
-| **SKU management** | `design/SKU-MANAGEMENT.md` | Catalog → SKU + price; `prices/resolve`; no cart or payment. |
-| **Shopping cart** | `design/SHOPPING-CART.md` | Basket, invoice build, Payux handoff, receipt → entitlement grant hook. |
+| Topic | Document |
+|-------|----------|
+| App index | `empirestate/APPLICATIONS.md`, `empirestate/app-documentation/README.md` |
+| SKU + cart (not Payux) | `empirestate/app-documentation/SKU-and-Cart.md` |
+| Payux stub | `empirestate/app-documentation/Payux.md` |
+| Payux functional | `funcspec/PAYUX.md` |
+| Payux detailed design | `design/PAYUX.md` |
+| Design index | `design/README.md` |
+| Funcspec index | `funcspec/README.md` |
 
 ---
 
-## Summary: Constraints to Honor
+## 6. Checklist: constraints every implementer should honor
 
-When implementing, respect:
-
-1. **Tenets 1–6 (significance-ordered)** — **Source control from the start (1)**; then **scaffolding (2)**, **lean (3)**, **production deployment completes work (4)**, **iterate on deployed systems (5)**, **billing early (6)** — `empirestate/TENETS.md`. When guidance conflicts, **lower numbers win**.
-2. **Accessor interface** — No ORM as primary abstraction; explicit accessors; ORM behind blackbox OK.
-3. **Right tool for job** — SQL, NoSQL, event streams; no ideological substitution.
-4. **Ledger pattern** — Append-only, immutable, projection-derived. Shared DNA across financial, claims, social, record-based.
-5. **Identity** — Logical silos default; physical opt-in; white-list for commuting. Participation-first.
-6. **Deployment** — Layered, deterministic, automation stands alone. Ansible current; transport/tool choice is configuration.
-7. **Transport agnostic** — OpenErgo, deployment: no single transport or provider required.
-8. **Application-specific** — Datastore topology, sync patterns, data stores: chosen per application.
-9. **Strong typing, interface-first** — All languages; define contracts before implementation.
-10. **Tenets 7–14** — Documentation authority, form, and layering — `empirestate/TENETS.md`.
+1. **`empirestate/TENETS.md` 1–6** — VCS from day one; fit the architecture; **lean** iteration scope; **deploy** defines done; iterate on **live** systems; **billing** trajectory when relevant. Lower numbers win on conflict.
+2. **Accessor / data** — `NO_ORM_POLICY` + `STANDARDS.md`: explicit accessors; ORM only behind blackbox if used.
+3. **Right store for the job** — SQL vs NoSQL vs streams per domain; no hype-driven substitution.
+4. **Ledger pattern** where billing/datastore docs apply — append-only, immutable, projection-friendly.
+5. **Identity defaults** — logical silos; physical silos opt-in; see `IDENTITY.md`.
+6. **Deployment** — layered, deterministic, portable; see `DEPLOYMENT.md`.
+7. **Contracts** — structured logs, canonical errors, `correlation_id` where specified.
+8. **Typing & interface-first** — `STANDARDS.md`.
+9. **`empirestate/TENETS.md` 7–14** — documentation authority, single source per fact, concise structured spec, layering `empirestate` / `funcspec` / `design`.
 
 ---
 
-## When Unclear
+## 7. When something is unclear
 
-- **Behavior / requirements** → `empirestate/` aspect docs (LEDGER, IDENTITY, BILLING, OPENERGO, DEPLOYMENT); per-app UX and flows → `funcspec/`.
-- **Implementation detail / contracts** → `core-platform-spec/` sections and `contracts/`, `policies/`.
-- **Process / workflow** → `core-documentation/DEVELOPMENT_GUIDE.md`, `CODING_STANDARDS.md`.
-- **Iteration order** → `empirestate/ROADMAP.md`, `empirestate/BACKLOG.md`.
+| Question type | Look here first |
+|----------------|-----------------|
+| “Should we build this? Is it in scope for Payux?” | `empirestate/BILLING.md`, `funcspec/PAYUX.md` |
+| “What does the user see?” | `funcspec/` |
+| “What do I implement (API/DB)?” | `design/` |
+| “What does the platform believe?” | `empirestate/` aspect docs |
+| “What are the engineering rules?” | `core-platform-spec/contracts/`, `policies/` |
+| “How do we work as a team?” | `core-documentation/DEVELOPMENT_GUIDE.md`, `CODING_STANDARDS.md` |
+| “What milestone are we in?” | `empirestate/ROADMAP.md`, `empirestate/BACKLOG.md` |
+
+---
+
+*EmpireStack documentation root: [`README.md`](README.md).*

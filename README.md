@@ -2,7 +2,7 @@
 
 This folder contains documentation for the EmpireStack project. Primary libraries below; **concise/** is a dense platform-only slice (no consuming applications).
 
-**Entry point for AI agents:** [GUIDE.md](GUIDE.md) — Orients a new AI session to the documentation. Explains where to find principles, constraints, and implementation guidance. Use when onboarding an agent to implement according to best practices.
+**How to use this documentation:** [GUIDE.md](GUIDE.md) — Canonical navigation: philosophy (`TENETS.md`), reading order for Payux and other work, corpus map, and implementation checklist. **Start agents here** before deep-diving folders.
 
 ## Structure
 
