@@ -47,7 +47,7 @@ Upstream systems integrate with **cart + provisioning**, not with payment mechan
 
 - **Billing** exposes: submit invoice / complete payment / retrieve receipt / refunds (later). It must **not** embed SKU catalog rules, entitlement rules, or cart business logic.  
 - **SKU management + cart** are white-labeled and own **SKU↔price binding** and **basket** state; the host application remains authoritative for **product/service definitions** (SKU manager maps those into sellable SKUs).  
-- **Applications** integrate with entitlements and fulfillment **after** the cart has a valid receipt—not with Stripe keys or raw processor contracts. **Model rule:** paid (or gift-substituted) entitlements always reference the **billing receipt / transaction id** (or equivalent gift record) for audit and support.
+- **Applications** integrate with entitlements and fulfillment **after** the cart has a valid receipt—not with **payment-processor** keys or raw vendor contracts; they integrate with **Payux**, which abstracts processors behind **pluggable adapter** implementations (M1: Stripe in the blackbox—see `design/PAYUX.md` §2.4, `funcspec/PAYUX.md` §1.1). **Model rule:** paid (or gift-substituted) entitlements always reference the **billing receipt / transaction id** (or equivalent gift record) for audit and support.
 
 ---
 

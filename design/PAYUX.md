@@ -29,7 +29,7 @@ Cart receives receipt ──► application grants entitlements (each backrefs r
 | Payux **does** | Payux **does not** |
 |----------------|---------------------|
 | Validate invoice payload shape (amount, currency, required ids) | Resolve SKU → price |
-| Collect payment via adapter (e.g. Stripe) | Interpret SKU or entitlement semantics |
+| Collect payment via **pluggable processor adapter** (M1: Stripe implementation behind interface) | Expose processor-specific concepts on **public** Payux APIs |
 | Mint ledger + issue **receipt** id | Grant entitlements or interpret product/service domain |
 | Store **metadata** blob verbatim (audit, handoff) | Use metadata for business rules |
 
@@ -47,6 +47,7 @@ Cart receives receipt ──► application grants entitlements (each backrefs r
 | White-label | Branding, success/cancel URLs, display strings from config. |
 | Standalone | REST + client; no OpenErgo. |
 | Deployable | Docker, `/health`, `/version`, structured logging. |
+| Pluggable processor | Core depends on **adapter interface**; **Stripe** is first blackbox implementation; cart APIs unchanged when adding processors. |
 
 **Non-goals**
 
@@ -77,7 +78,8 @@ Payux **never** recomputes total from `metadata`; **amount_due** is authoritativ
 Append-only. Same shape as before (mint/refund/…).
 
 - `metadata` or dedicated `invoice_snapshot` stores full invoice + processor ids.
-- `source_reference`: Stripe session/payment intent id.
+- `processor_kind` (string): e.g. `stripe` — which adapter handled the payment (audit, support).
+- `source_reference`: **Processor-native** id (session, payment intent, charge—opaque to Payux domain logic).
 
 ### 2.3 Receipt
 
@@ -86,10 +88,28 @@ External name for successful **mint** outcome.
 - `receipt_id` (UUID), links to `ledger_entry_id`, `invoice_id`, `principal_id`, `created_at`, `amount_paid`, `currency`, `metadata` echo (optional).
 - Returned to cart in API response and/or webhook callback pattern cart registers.
 
-### 2.4 Payment processor adapter
+### 2.4 Payment processor abstraction (pluggable blackbox)
 
-- `create_payment_for_invoice(invoice)` → session URL or client secret.
-- `handle_webhook` → idempotent mint + **receipt** issuance; notify cart if async (out of scope for MVP: polling `GET /receipts/:id` may suffice).
+Payux **never** leaks a specific processor in its **integrator-facing** contract. All HTTP resources that the **cart or host** calls are **processor-agnostic**. A **first-party adapter** implements Payux-defined interfaces; **Stripe** is the **initial** blackbox implementation (M1). Additional processors ship as **new classes** (or packages) that implement the same interfaces—**no change** to invoice/receipt semantics.
+
+**Interface boundary (conceptual — names illustrative):**
+
+| Responsibility | Method / behavior |
+|----------------|-------------------|
+| Start payment | `create_checkout_for_invoice(invoice)` → checkout handoff (e.g. redirect URL, client token, expiry) plus **internal** processor correlation id(s). |
+| Inbound completion | Accept raw webhook HTTP → **verify** signature/Headers per processor rules → emit a **normalized** `PaymentSettled` (or failure) **internal** event: `invoice_id`, `amount_paid`, `currency`, success flag, processor refs. |
+| Idempotency | Adapter cooperates with Payux dedupe (same processor event / same `invoice_id` must not double-mint). |
+
+**Composition:**
+
+- At runtime, Payux loads **one active processor implementation** (config: `PAYMENT_PROCESSOR_DRIVER=stripe` or similar). Core services depend only on the **interface**, not on Stripe types.
+- **Stripe** (or any vendor) SDK and secrets live **inside** the adapter implementation—**blackbox** behind the interface, consistent with `NO_ORM_POLICY` “implementation behind the contract.”
+- **Tests:** fake / in-memory adapter implementing the same interface for unit tests without network.
+
+**Webhooks:**
+
+- Expose a **single** ingress such as `POST /api/v1/webhooks/payments` that **dispatches** to the registered adapter(s) (e.g. detect provider from headers and delegate). Processors require different verification rules; the dispatcher is thin routing, not business logic.
+- M1 may ship with only the Stripe adapter registered; adding **Processor B** = new adapter + register + env for secrets—**no** change to cart-facing APIs.
 
 ---
 
@@ -103,7 +123,7 @@ Version prefix: `/api/v1`.
 | GET | `/version` | Service name, version, build. |
 | POST | `/api/v1/invoices/:invoice_id/pay` | Body: full invoice DTO if not already stored, or reference; creates payment session for **amount_due**. |
 | POST | `/api/v1/payments/sessions` | Alternative: single POST with invoice in body → returns checkout session (simpler for MVP). |
-| POST | `/api/v1/webhooks/stripe` | Webhook; idempotent completion → mint + receipt. |
+| POST | `/api/v1/webhooks/payments` | **Processor webhooks** (not called by integrators). Dispatches to the active adapter(s); verifies signatures; idempotent mint + receipt. Stripe registers this URL in M1; other adapters use the same path with their own verification branch. |
 | GET | `/api/v1/receipts/:receipt_id` | Cart fetches receipt status/details after redirect. |
 | GET | `/api/v1/receipts` | Query by `invoice_id` or `principal_id` (auth scoped). |
 
@@ -128,7 +148,9 @@ Structured JSON logs; `correlation_id` on every request; propagate `invoice_id` 
 
 ## 6. Configuration
 
-Env/files: Stripe keys, webhook secret, `PUBLIC_BASE_URL`, `SERVICE_*`, DB URL. No secrets in logs.
+- **`PAYMENT_PROCESSOR_DRIVER`** (or equivalent): selects the **registered** adapter implementation (M1: `stripe`).
+- **Processor-specific secrets** (e.g. Stripe API key, webhook signing secret): loaded only by that adapter’s factory; **not** referenced from Payux core code paths.
+- **Shared:** `PUBLIC_BASE_URL`, `SERVICE_*`, DB URL. No secrets in logs.
 
 ---
 
@@ -146,12 +168,14 @@ Verify webhooks; HTTPS redirects; rate-limit session creation; never trust `meta
 
 ## 9. Implementation sequencing (suggested)
 
-1. Schema: ledger, receipts, webhook dedupe; optional `invoices` staging table.
-2. `POST` payment session from **invoice** DTO (ignore SKU meaning in code paths).
-3. Webhook → mint + receipt; persist metadata blob.
-4. `GET` receipt by id / invoice id.
-5. White-label URLs and branding hooks.
-6. Harden for production.
+1. Define **processor adapter interface** + **fake** adapter for tests.
+2. Schema: ledger, receipts, webhook dedupe, `processor_kind` / `source_reference`; optional `invoices` staging table.
+3. Implement **Stripe adapter** (blackbox) behind interface; wire via `PAYMENT_PROCESSOR_DRIVER`.
+4. `POST` payment session from **invoice** DTO via interface only (ignore SKU meaning in code paths).
+5. **`POST /api/v1/webhooks/payments`** dispatcher → adapter verify → mint + receipt; persist metadata blob.
+6. `GET` receipt by id / invoice id.
+7. White-label URLs and branding hooks.
+8. Harden for production; document how to add **Processor B** (new adapter + registration only).
 
 ---
 

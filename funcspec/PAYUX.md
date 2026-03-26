@@ -6,6 +6,14 @@
 
 Payux **does not** sell products, **does not** manage SKUs or prices, **does not** run a shopping cart, and **does not** decide what the user is entitled to after purchase. Those concerns belong to **separate systems** (and to the host application’s domain model). Payux only bridges **money owed → payment captured → proof of payment issued**.
 
+### 1.1 Payment processor (pluggable; integrator-visible behavior)
+
+Payux integrates with real card/network rails through a **replaceable payment processor** behind Payux-defined **internal** interfaces (**blackbox** implementations).
+
+- **Integrators** (cart, host, back-office) use **only** Payux’s **public** APIs: invoice, payment session, receipt. Those contracts do **not** name Stripe, PayPal, or any other vendor.
+- **M1** ships with **Stripe** as the **first** concrete implementation inside the blackbox. Operators configure credentials and webhook endpoints for that deployment; future processors are added by shipping **another** adapter implementation—**without** changing what integrators call.
+- **Payers** may still see a **processor-hosted** payment UI (branding and legal copy can reflect that processor where required by law). Payux wraps or redirects into that experience but remains the **deployment’s** checkout orchestration layer.
+
 ---
 
 ## 2. What is explicitly out of scope (neighbor systems)
@@ -31,7 +39,7 @@ Payux may **store** a blob of **metadata** attached to the invoice (for example 
 |-------|------|
 | **Payer** | Person (or delegated checkout) who completes payment in the processor’s UI or flow initiated by Payux. |
 | **Integrator** | Shopping cart, back-office tool, or automated job that **creates** the invoice and **starts** payment; receives **receipt** after success. |
-| **Operator / deployer** | Configures branding, processor keys, URLs, and tenant-scoped settings. |
+| **Operator / deployer** | Configures branding, **which processor driver** the deployment uses (M1: Stripe), processor credentials (blackbox), webhook registration, URLs, and tenant-scoped settings. |
 
 The **payer** never needs to know about SKUs inside Payux—they only see **amount**, **currency**, **merchant branding**, and whatever **legally required** payment descriptors the processor shows.
 
@@ -62,7 +70,7 @@ These are the **product** surfaces Payux is responsible for; everything else (pr
 ### 5.2 Transition states
 
 - **Loading** state while the payment session is created.
-- **Redirect or handoff** to the **payment processor**’s UI (Stripe Checkout, etc.) — Payux does not replicate full card UX; it orchestrates the handoff.
+- **Redirect or handoff** to the **active processor’s** hosted payment UI (M1: typically Stripe Checkout behind the scenes) — Payux does not replicate full card UX; it orchestrates the handoff. The **integrator** is not required to integrate with that vendor directly.
 - **Return** from processor: Payux shows or redirects to **success** or **failure** pages **within its branded shell**, or immediately redirects to integrator-supplied URLs with **stable correlation parameters** (e.g. invoice id) so the host can resume.
 
 ### 5.3 Success presentation
@@ -107,7 +115,7 @@ The **integrator** may embed a “Pay” button that **calls Payux**; the **clic
 ## 8. Trust and errors (product-level)
 
 - **Never** allow the browser alone to set **amount_due**; integrator server must submit the invoice Payux charges against.
-- **Fraud and PCI**: card data stays in the **processor**; Payux stays in **token/session** orchestration—consistent with detailed design.
+- **Fraud and PCI**: card data stays in the **processor** (whichever adapter is configured); Payux stays in **token/session** orchestration via its **abstracted** processor layer—see `design/PAYUX.md` §2.4.
 - **Idempotency:** Same **invoice id** should not double-charge; retries should surface a clear **already paid** or **reuse session** experience (exact behavior per `design/PAYUX.md`).
 
 ---
