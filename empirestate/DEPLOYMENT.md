@@ -90,6 +90,8 @@ ESB + environment (from invocation, not in ESB file)  →  expanded / normalized
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
+**Exercise:** An evolving **ideal-system** model in YAML lives under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md)) to evaluate whether ESB captures full product end-state intent before low-level execution is defined.
+
 ### Representative ESB examples (illustrative — for review)
 
 The blocks below are **not** a frozen schema. They show the **shape**: **component + base namespace** (+ optional *depends_on*). **Environment** is **omitted** on purpose—the pipeline provides it at deploy time (e.g. `staging` → resolved key `acme-staging`). *Profile* and data-plane defaults live in the **binding for that resolved key**. **Component `version`** is often omitted or given as a channel (`latest`); a pin appears when you need one. Field names and nesting are candidates for your feedback.

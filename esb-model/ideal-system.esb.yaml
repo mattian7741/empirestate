@@ -1,0 +1,33 @@
+# Ideal system — ESB exercise model
+# Human narrative drives updates; environment is NOT authored here (invocation only).
+# See esb-model/README.md
+
+esb: "0.1"
+
+meta:
+  id: ideal-system
+  summary: >
+    Placeholder. Replace incrementally as the product owner describes the ideal end-state.
+    Components and depends_on use logical artifact names only (catalog-unique).
+
+# One entry per logical "slice" sharing a namespace (same pattern as empirestate/DEPLOYMENT.md Example D).
+# Add slices as the ideal system is described.
+slices: []
+
+# Example shape (commented — uncomment or copy when ready):
+# slices:
+#   - namespace: acme
+#     components:
+#       - id: payux-api
+#         depends_on:
+#           - ledger-store
+#           - payments-bus
+#       - id: payux-worker
+#         depends_on:
+#           - ledger-store
+#           - payments-bus
+#   - namespace: open-ergo-plane
+#     components:
+#       - id: open-ergo-worker
+#         depends_on:
+#           - ergo-transport

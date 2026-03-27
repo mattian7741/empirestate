@@ -116,6 +116,7 @@ If there is **no** `FUNCSPEC.md` / `DESIGN.md` under that application yet, produ
 | Data stores | `empirestate/STANDARDS.md`, `core-platform-spec/06_SECTION06.md` |
 | Sync | `empirestate/LEDGER.md`, `core-platform-spec/09_SECTION09.md` |
 | Deploy layers | `empirestate/DEPLOYMENT.md`, `core-platform-spec/02_SECTION02.md` |
+| ESB ideal-system model (exercise) | `esb-model/README.md`, `esb-model/ideal-system.esb.yaml` |
 
 ### Applications & Payux stack
 
