@@ -36,7 +36,7 @@ User = person; **participant** = role in context; **entitlement** = access (auth
 
 ## Deployment (summary)
 
-No lock-in to one cloud; containers portable; state externalized; secrets outside host. **Intent uses names** (e.g. OpenErgo in namespace **`xyz`**); **`xyz`** is a versioned binding to the real stack (environment, profile, RabbitMQ URL, creds, …)—swap binding, same author-facing sentence. **Empire State Build (ESB):** few human parameters (no per-environment copy); **environment** from pipeline + **namespace** from ESB → resolved binding key (e.g. `<namespace>-<environment>`) → expanded spec → **Ansible** (for now) → Docker/shell/APIs (`empirestate/DEPLOYMENT.md` § Empire State Build).
+No lock-in to one cloud; containers portable; state externalized; secrets outside host. **Intent uses names** (e.g. OpenErgo in **logical** namespace **`xyz`**); at deploy time, **environment** + resolver picks the binding row that maps **`xyz`** to **physical** targets (URLs, creds, …)—swap binding, same ESB sentence. **Empire State Build (ESB):** few human parameters (no per-environment copy); **environment** from pipeline + **namespace** from ESB → resolved binding key (e.g. `<namespace>-<environment>`) → expanded spec → **Ansible** (for now) → Docker/shell/APIs (`empirestate/DEPLOYMENT.md` § Empire State Build).
 
 
 Expand: `../empirestate/OPENERGO.md`, `LEDGER.md`, `IDENTITY.md`, `BILLING.md`, `DEPLOYMENT.md`, `VIRAL.md`.
