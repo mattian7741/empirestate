@@ -16,16 +16,18 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Named artifacts and implementation binding
 
-**Author-facing statements use names, not wiring.** Environments, networks, data planes, and similar **targets** are **named artifacts** in the spec (e.g. `xyz`). A component or manifest at the **highest layer** only asserts a relationship to that name—for example: *OpenErgo components run on network **`xyz`***. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
+**Author-facing statements use names, not wiring.** **Namespaces** (logical deployment contexts), data planes, and similar **targets** are **named artifacts** in the spec (e.g. `xyz`, `acme-staging`). A component or manifest at the **highest layer** only asserts a relationship to that name—for example: *OpenErgo components run in **namespace `xyz`***. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
 
-**Binding:** Each name resolves to a **technical implementation** stored elsewhere (version-controlled registry, env catalog, or materialized config). Example: `xyz` → *OpenErgo transport is AMQP; broker URL …; vhost …; credential reference …; tuning …*. Replacing *how* `xyz` is realized (different broker, host, or orchestration) updates **the binding for `xyz`**; consumers that say *run on `xyz`* stay unchanged.
+**Note:** ESB **namespace** means a **named binding** for “where and under what defaults this runs”—not necessarily the same thing as a Kubernetes `metadata.namespace` (though a binding *may* set that as an implementation detail).
+
+**Binding:** Each name resolves to a **technical implementation** stored elsewhere (version-controlled registry, env catalog, or materialized config). The binding is where **environment** (e.g. staging vs production), **profile** (sizing/tier), broker URL, vhost, credential references, tuning, and related defaults **live**—so the lay author does not repeat them. Example: `xyz` → *environment: production; profile: standard; OpenErgo transport is AMQP; broker URL …; vhost …; credential reference …; tuning …*. Replacing *how* `xyz` is realized updates **the binding for `xyz`**; consumers that say *run in `xyz`* stay unchanged.
 
 **Separation:**
 
 | Layer | Says |
 |-------|------|
-| **Component / intent** | *Runs on **`xyz`*** (or deploy to **`staging`**, attach store **`ledger-db`**, etc.) |
-| **Named artifact + binding** | **`xyz`** is defined by **concrete** endpoints, secrets references, images, playbooks, or generated low-level files |
+| **Component / intent** | *Runs in **namespace `xyz`*** (or attach store **`ledger-db`**, etc.) |
+| **Named artifact + binding** | **`xyz`** is defined by **concrete** endpoints, secrets references, environment/profile defaults, images, playbooks, or generated low-level files |
 | **Execution** | Docker, Ansible, cloud APIs, etc.—**means**, not the conceptual definition |
 
 **Goal:** Lowest barrier to entry for authors—**declare affiliation to a stable name**—while keeping **determinism and audit** in the binding layer so deployments remain reproducible.
@@ -40,7 +42,8 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **ESB document** (authoring layer):
 
-- Short, stable fields: e.g. **what** runs (application / component id + version or digest), **where** in logical terms (**environment** name, **network** name like `xyz`, optional **profile**), and **dependencies** referenced by **name** (other apps, stores, buses).
+- Short, stable fields: e.g. **what** runs (application / component id + version or digest), **where** in logical terms (**namespace** name like `xyz` or `acme-staging`), and **dependencies** referenced by **name** (other apps, stores, buses).
+- **Environment**, **profile** (sizing/tier), and similar operational defaults are **not** repeated in ESB—they are **properties of the namespace binding**, maintained by operators or platform owners, not by the lay author.
 - The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
 
 **Inference chain** (current stack direction):
@@ -52,17 +55,17 @@ ESB (lay descriptor)  →  expanded / normalized spec (machine-readable)  →  s
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** ESB **references** names (`staging`, `xyz`, `payux:1.2.3`); **bindings** supply the heavy detail; the realizer **consumes** the expanded result and never asks the author for RabbitMQ URLs at the top.
+**Relationship to named artifacts:** ESB **references** names (`xyz`, `acme-staging`, `payux:1.2.3`); **bindings** supply environment, profile, and wiring; the realizer **consumes** the expanded result and never asks the author for RabbitMQ URLs at the top. **Operational clarity** (e.g. “this is production”) usually comes from **distinct namespace names** and versioned bindings, not from duplicate fields in ESB.
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
 ### Representative ESB examples (illustrative — for review)
 
-The blocks below are **not** a frozen schema. They show the **shape** we want authors to think in: few fields, names instead of wiring, room for inference (*profile*, *depends_on*). Field names and nesting are candidates for your feedback.
+The blocks below are **not** a frozen schema. They show the **shape** we want authors to think in: **component + namespace** (+ optional *depends_on*). *Environment*, *profile*, and data-plane defaults are **not** lay fields—they are defined in the **namespace binding** (hidden from the lay author). Field names and nesting are candidates for your feedback.
 
 **Example A — minimal single component**
 
-A single service version on a logical environment; bindings define URLs, secrets, and image pull specifics.
+A single service version; **namespace** selects the full context (environment, profile, URLs, secrets, image pull policy, etc.) from the binding catalog.
 
 ```yaml
 # Illustrative only — field names TBD
@@ -70,20 +73,19 @@ esb: "0.1"
 component:
   id: payux
   version: "1.2.3"
-environment: staging
+namespace: acme-staging
 ```
 
-**Example B — logical network / data plane by name**
+**Example B — namespace as logical plane (e.g. OpenErgo)**
 
-Same idea as *OpenErgo runs on network `xyz`*: the author names the plane; the binding carries broker URL, vhost, credentials references, tuning.
+Same idea as *OpenErgo runs in namespace `xyz`*: the author names the context; the binding carries environment, profile, broker URL, vhost, credential references, tuning.
 
 ```yaml
 esb: "0.1"
 component:
   id: open-ergo-worker
   version: "0.9.1"
-environment: production
-network: xyz
+namespace: xyz
 ```
 
 **Example C — named dependencies (stores, buses, sibling apps)**
@@ -95,33 +97,19 @@ esb: "0.1"
 component:
   id: payux
   version: "1.2.3"
-environment: staging
+namespace: acme-staging
 depends_on:
   - ledger-store
   - payments-bus
 ```
 
-**Example D — profile for sizing or tier**
+**Example D — stack slice (multiple components, shared namespace)**
 
-*Profile* is a convention hook: small/medium/large (or product-specific tiers) maps to inferred limits, replicas, or resource classes in the **expanded spec**—still without surfacing Docker or cloud APIs in ESB.
-
-```yaml
-esb: "0.1"
-component:
-  id: payux
-  version: "1.2.3"
-environment: staging
-profile: small
-```
-
-**Example E — stack slice (multiple components, shared context)**
-
-Multiple components that share **environment** (and optionally **network**) so the pipeline can expand one coherent slice; each row stays thin.
+Multiple components share one **namespace** so the pipeline expands one coherent slice; each row stays thin. Shared defaults (environment, profile, bus, …) come from that namespace’s binding once.
 
 ```yaml
 esb: "0.1"
-environment: staging
-network: xyz
+namespace: acme-staging
 components:
   - { id: payux-api, version: "1.2.3" }
   - { id: payux-worker, version: "1.2.3" }
