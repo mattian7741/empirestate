@@ -26,7 +26,7 @@ This folder is **experimental**: YAML shape and field names follow the deploymen
 
 | Path | Role |
 |------|------|
-| **`ideal-system.esb.yaml`** | Rolling **ideal end-state** model (edit as the narrative grows). |
+| **`ideal-system.esb.yaml`** | Rolling **ideal end-state** model. **First case:** Circuit Leagues (PWA, auth/session v1). |
 | **`slices/`** | Optional: one file per major namespace/stack if the single file gets unwieldy. |
 | **`EVALUATION.md`** | Running notes: fit, gaps, fields we wish we had (created when first issues appear). |
 

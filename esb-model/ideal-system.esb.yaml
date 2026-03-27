@@ -1,33 +1,63 @@
-# Ideal system — ESB exercise model
-# Human narrative drives updates; environment is NOT authored here (invocation only).
-# See esb-model/README.md
+# Circuit Leagues — ideal end-state (v1: PWA + auth/session only)
+# ESB exercise: logical names only. Environment at invocation, not in this file.
+# Workflow narrative: landing → identifier → HTTP gateway 200 → code field;
+# gateway → openergo transport → authcode-generator (+ user store) → transport
+# → email-sender | sms-sender; user submits code → consumption API (not via
+# transport) → server + client session; logout → gateway → transport →
+# router-orchestrator → session-persister → user store.
+# Bus plane: Ergo family (e.g. Hypergo/OpenErgo stack in ref impl) — logical id below.
 
 esb: "0.1"
 
 meta:
   id: ideal-system
+  product: circuit-leagues
+  scope: "PWA (web + Android/iOS via install); auth + session only for this cut"
   summary: >
-    Placeholder. Replace incrementally as the product owner describes the ideal end-state.
-    Components and depends_on use logical artifact names only (catalog-unique).
+    Passwordless, user-emergent identity: no explicit registration; OTP to email/SMS
+    as the only step. Writes that enter the pipeline use the OpenErgo HTTP gateway
+    onto the bus; session verify/persist for login uses the consumption API.
 
-# One entry per logical "slice" sharing a namespace (same pattern as empirestate/DEPLOYMENT.md Example D).
-# Add slices as the ideal system is described.
-slices: []
+slices:
+  - namespace: circuit-leagues
+    components:
+      # Hosted static/edge asset; targets consumption API + gateway URLs.
+      - id: circuit-leagues-pwa
+        depends_on:
+          - circuit-leagues-consumption-api
+          - openergo-http-gateway
 
-# Example shape (commented — uncomment or copy when ready):
-# slices:
-#   - namespace: acme
-#     components:
-#       - id: payux-api
-#         depends_on:
-#           - ledger-store
-#           - payments-bus
-#       - id: payux-worker
-#         depends_on:
-#           - ledger-store
-#           - payments-bus
-#   - namespace: open-ergo-plane
-#     components:
-#       - id: open-ergo-worker
-#         depends_on:
-#           - ergo-transport
+      # Auth start, logout publish — ingress to openergo transport.
+      - id: openergo-http-gateway
+        depends_on:
+          - openergo-transport
+
+      # OTP verify, session establish/read — self-service API (not via bus).
+      - id: circuit-leagues-consumption-api
+        depends_on:
+          - user-profile-store
+
+      # Pipeline: issue code, persist to user schema, publish delivery event.
+      - id: authcode-generator
+        depends_on:
+          - openergo-transport
+          - user-profile-store
+
+      - id: email-sender
+        depends_on:
+          - openergo-transport
+
+      - id: sms-sender
+        depends_on:
+          - openergo-transport
+
+      # Logout: reshape event for persistence path.
+      - id: logout-router-orchestrator
+        depends_on:
+          - openergo-transport
+
+      # General-purpose persister in this slice: session row delete/upsert from logout.
+      - id: session-persister
+        depends_on:
+          - openergo-transport
+          - user-profile-store
