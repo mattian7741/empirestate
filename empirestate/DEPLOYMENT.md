@@ -32,11 +32,13 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ---
 
-## Deployment descriptor grammar (principle and pipeline)
+## Empire State Build (ESB)
 
-**Principle:** A human can describe a deployment with a **very small set of parameters**; the system **infers** the rest from **named bindings**, conventions, and versioned rules. The author does not author Dockerfiles, inventory, or shell as the **source of truth**—those are **materialized** to satisfy an end state derived from the descriptor.
+**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs, **where** (in logical terms), and **what it attaches to**—by **name**—while the system **infers** the rest via **named bindings**, conventions, and versioned rules.
 
-**Lay descriptor** (authoring layer):
+**Principle:** A human can describe a deployment with a **very small set of parameters**; the author does not treat Dockerfiles, inventory, or shell as the **source of truth**. Those artifacts are **materialized** to satisfy an end state derived from the ESB.
+
+**ESB document** (authoring layer):
 
 - Short, stable fields: e.g. **what** runs (application / component id + version or digest), **where** in logical terms (**environment** name, **network** name like `xyz`, optional **profile**), and **dependencies** referenced by **name** (other apps, stores, buses).
 - The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
@@ -44,15 +46,86 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 **Inference chain** (current stack direction):
 
 ```text
-Lay descriptor  →  expanded / normalized spec (machine-readable)  →  state realizer (e.g. Ansible)  →  concrete actions (Docker pull/run, files, systemd, APIs, …)  →  measured end state
+ESB (lay descriptor)  →  expanded / normalized spec (machine-readable)  →  state realizer (e.g. Ansible)  →  concrete actions (Docker pull/run, files, systemd, APIs, …)  →  measured end state
 ```
 
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** The lay descriptor **references** names (`staging`, `xyz`, `payux:1.2.3`); **bindings** supply the heavy detail; the realizer **consumes** the expanded result and never asks the author for RabbitMQ URLs at the top.
+**Relationship to named artifacts:** ESB **references** names (`staging`, `xyz`, `payux:1.2.3`); **bindings** supply the heavy detail; the realizer **consumes** the expanded result and never asks the author for RabbitMQ URLs at the top.
 
-**Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from descriptor through materialized artifacts.
+**Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
+
+### Representative ESB examples (illustrative — for review)
+
+The blocks below are **not** a frozen schema. They show the **shape** we want authors to think in: few fields, names instead of wiring, room for inference (*profile*, *depends_on*). Field names and nesting are candidates for your feedback.
+
+**Example A — minimal single component**
+
+A single service version on a logical environment; bindings define URLs, secrets, and image pull specifics.
+
+```yaml
+# Illustrative only — field names TBD
+esb: "0.1"
+component:
+  id: payux
+  version: "1.2.3"
+environment: staging
+```
+
+**Example B — logical network / data plane by name**
+
+Same idea as *OpenErgo runs on network `xyz`*: the author names the plane; the binding carries broker URL, vhost, credentials references, tuning.
+
+```yaml
+esb: "0.1"
+component:
+  id: open-ergo-worker
+  version: "0.9.1"
+environment: production
+network: xyz
+```
+
+**Example C — named dependencies (stores, buses, sibling apps)**
+
+Dependencies are **references by name**; each name resolves in the binding catalog (connection strings, queues, peer service discovery—not spelled out here).
+
+```yaml
+esb: "0.1"
+component:
+  id: payux
+  version: "1.2.3"
+environment: staging
+depends_on:
+  - ledger-store
+  - payments-bus
+```
+
+**Example D — profile for sizing or tier**
+
+*Profile* is a convention hook: small/medium/large (or product-specific tiers) maps to inferred limits, replicas, or resource classes in the **expanded spec**—still without surfacing Docker or cloud APIs in ESB.
+
+```yaml
+esb: "0.1"
+component:
+  id: payux
+  version: "1.2.3"
+environment: staging
+profile: small
+```
+
+**Example E — stack slice (multiple components, shared context)**
+
+Multiple components that share **environment** (and optionally **network**) so the pipeline can expand one coherent slice; each row stays thin.
+
+```yaml
+esb: "0.1"
+environment: staging
+network: xyz
+components:
+  - { id: payux-api, version: "1.2.3" }
+  - { id: payux-worker, version: "1.2.3" }
+```
 
 ---
 

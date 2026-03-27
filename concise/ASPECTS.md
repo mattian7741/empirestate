@@ -36,7 +36,7 @@ User = person; **participant** = role in context; **entitlement** = access (auth
 
 ## Deployment (summary)
 
-No lock-in to one cloud; containers portable; state externalized; secrets outside host. **Intent uses names** (e.g. OpenErgo on network **`xyz`**); **`xyz`** is a versioned binding to the real stack (e.g. RabbitMQ URL, creds)—swap binding, same author-facing sentence. **Lay descriptor:** few human parameters → inferred expanded spec → **Ansible** (for now) → Docker/shell/APIs to reach end state (`empirestate/DEPLOYMENT.md` § grammar).
+No lock-in to one cloud; containers portable; state externalized; secrets outside host. **Intent uses names** (e.g. OpenErgo on network **`xyz`**); **`xyz`** is a versioned binding to the real stack (e.g. RabbitMQ URL, creds)—swap binding, same author-facing sentence. **Empire State Build (ESB):** few human parameters → inferred expanded spec → **Ansible** (for now) → Docker/shell/APIs to reach end state (`empirestate/DEPLOYMENT.md` § Empire State Build).
 
 
 Expand: `../empirestate/OPENERGO.md`, `LEDGER.md`, `IDENTITY.md`, `BILLING.md`, `DEPLOYMENT.md`, `VIRAL.md`.
