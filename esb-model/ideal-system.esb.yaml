@@ -1,63 +1,68 @@
-# Circuit Leagues — ideal end-state (v1: PWA + auth/session only)
-# ESB exercise: logical names only. Environment at invocation, not in this file.
-# Workflow narrative: landing → identifier → HTTP gateway 200 → code field;
-# gateway → openergo transport → authcode-generator (+ user store) → transport
-# → email-sender | sms-sender; user submits code → consumption API (not via
-# transport) → server + client session; logout → gateway → transport →
-# router-orchestrator → session-persister → user store.
-# Bus plane: Ergo family (e.g. Hypergo/OpenErgo stack in ref impl) — logical id below.
+# Ideal system — ESB exercise model
+# CircuitLeagues M1: PWA + passwordless auth/session (user narrative → revise as you litigate design).
+# Environment is NOT authored here (invocation only). See esb-model/README.md
 
 esb: "0.1"
 
 meta:
   id: ideal-system
-  product: circuit-leagues
-  scope: "PWA (web + Android/iOS via install); auth + session only for this cut"
+  product: circuitleagues
+  milestone: auth-session-m1
   summary: >
-    Passwordless, user-emergent identity: no explicit registration; OTP to email/SMS
-    as the only step. Writes that enter the pipeline use the OpenErgo HTTP gateway
-    onto the bus; session verify/persist for login uses the consumption API.
+    Progressive web app (web-hosted; Android/iPhone/desktop). Initial scope: authentication and session
+    only. Passwordless: user enters email or phone; no separate registration step (user-emergent).
+    Login/logout writes go OpenErgo http-gateway → bus; code verify + session read path via consumption API
+    (not carried on the OpenErgo write pipeline). User profile / session / auth code material live in a
+    logical user datastore (central vs distributed — unspecified at ESB).
 
 slices:
-  - namespace: circuit-leagues
+  - namespace: circuitleagues
+    notes: >
+      Single product namespace for M1. openergo-bus is shared transport; user-datastore is the logical
+      store for profile + auth code + session material. Workflow narrative is in meta.summary and
+      esb-model/README.md (update when design changes).
     components:
-      # Hosted static/edge asset; targets consumption API + gateway URLs.
-      - id: circuit-leagues-pwa
+      # PWA shell + static/hosting as one logical deployable (fine to split later).
+      - id: circuitleagues-web
         depends_on:
-          - circuit-leagues-consumption-api
+          - circuit-auth-consumption-api
           - openergo-http-gateway
 
-      # Auth start, logout publish — ingress to openergo transport.
+      # OpenErgo ingress for publish-style commands (login request, logout, outbound dispatch chain).
       - id: openergo-http-gateway
         depends_on:
-          - openergo-transport
+          - openergo-bus
 
-      # OTP verify, session establish/read — self-service API (not via bus).
-      - id: circuit-leagues-consumption-api
+      # Consumption path: user submits code; server validates, establishes session (client + server persistence).
+      - id: circuit-auth-consumption-api
         depends_on:
-          - user-profile-store
+          - user-datastore
 
-      # Pipeline: issue code, persist to user schema, publish delivery event.
+      # Receives login-request event; generates code; persists to user store; publishes delivery event.
       - id: authcode-generator
         depends_on:
-          - openergo-transport
-          - user-profile-store
+          - openergo-bus
+          - user-datastore
 
       - id: email-sender
         depends_on:
-          - openergo-transport
+          - openergo-bus
 
       - id: sms-sender
         depends_on:
-          - openergo-transport
+          - openergo-bus
 
-      # Logout: reshape event for persistence path.
+      # Logout: receives command via gateway; rewrites event for persistence consumer.
       - id: logout-router-orchestrator
         depends_on:
-          - openergo-transport
+          - openergo-bus
 
-      # General-purpose persister in this slice: session row delete/upsert from logout.
-      - id: session-persister
+      # General-purpose writer: applies session invalidation / upsert from bus (e.g. logout path).
+      - id: data-persister
         depends_on:
-          - openergo-transport
-          - user-profile-store
+          - openergo-bus
+          - user-datastore
+
+# Logical artifacts referenced above but not expressed as separate runnable components in M1:
+# - openergo-bus
+# - user-datastore
