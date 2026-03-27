@@ -20,7 +20,7 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **Note:** ESB **namespace** means a **logical handle** for “which slice of the platform this attaches to”—not necessarily the same thing as a Kubernetes `metadata.namespace` (though a binding *may* set that as an implementation detail).
 
-**Logical vs physical:** In the ESB, **namespace** is a **logical reference**—it identifies a *role or slice in the product model* (which bus plane, tenant context, application family attachment point), **not** a particular host, URL, cluster ID, or broker instance. **Environment**, supplied at **deployment time**, is the coordinate that turns that logic into **selection of a binding**. The binding row is what holds **references to physical (concrete) artifacts**: real endpoints, vhosts, clusters, image digests, credential mounts, volume IDs, and whatever else is *actually* touched in that environment. **Same** logical `namespace` string in the ESB across promotions; **different** `environment` at invocation → **different** physical realization, without editing the ESB.
+**Logical vs concrete:** In the ESB, **namespace** is a **logical reference**—it identifies a *role or slice in the product model* (which bus plane, tenant context, application family attachment point), **not** a particular host, URL, cluster ID, or broker instance. **Environment**, supplied at **deployment time**, is the coordinate that turns that logic into **selection of a binding**. The binding row holds **references to concrete artifacts**: real endpoints, vhosts, clusters, image digests, credential mounts, volume IDs, and whatever else is *actually* touched in that environment. **Same** logical `namespace` string in the ESB across promotions; **different** `environment` at invocation → **different concrete realization**, without editing the ESB.
 
 **Binding:** Each **resolved context key** maps to that **technical implementation** record (version-controlled registry, env catalog, or materialized config). It holds **profile** (sizing/tier), broker URL, vhost, credential references, tuning, and other concrete detail. Example: key `xyz-production` → *profile: standard; OpenErgo transport is AMQP; broker URL …; vhost …; credential reference …; tuning …*. Replacing *how* that context is realized updates **that binding row**; the ESB line *namespace `xyz`* stays unchanged across environments.
 
@@ -29,7 +29,7 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 | Layer | Says |
 |-------|------|
 | **Component / intent** | *Runs with **namespace `acme`*** (or attach store **`ledger-db`**, etc.)—**logical** only; **same** intent document for staging and production |
-| **Resolved context + binding** | Pipeline supplies **environment**; resolver forms **`<namespace>-<environment>`** (or an equivalent rule) to load **physical / concrete** endpoints, secrets references, profile, images, playbooks, or generated low-level files |
+| **Resolved context + binding** | Pipeline supplies **environment**; resolver forms **`<namespace>-<environment>`** (or an equivalent rule) to load **concrete** endpoints, secrets references, profile, images, playbooks, or generated low-level files |
 | **Execution** | Docker, Ansible, cloud APIs, etc.—**means**, not the conceptual definition |
 
 **Goal:** Lowest barrier to entry for authors—**declare affiliation to a stable name**—while keeping **determinism and audit** in the binding layer so deployments remain reproducible.
@@ -44,10 +44,24 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **ESB document** (authoring layer):
 
-- Short, stable fields: e.g. **what** runs (application / component id + version or digest), **which logical namespace** (`xyz`, `acme`, …—**without** embedding environment), and **dependencies** referenced by **name** (other apps, stores, buses).
+- Short, stable fields: e.g. **what** runs (application / component `id` and **optional** `version`—see below), **which logical namespace** (`xyz`, `acme`, …—**without** embedding environment), and **dependencies** referenced by **name** (see **`depends_on`** below).
 - **The same ESB is reused for every environment.** There must **not** be one ESB copy per environment; **environment** is supplied **outside** the ESB (see below).
 - **Profile** (sizing/tier) and other operational defaults **live in the binding** for the **resolved** context, not in the lay ESB—operators/platform owners maintain those records; the lay author does not duplicate them.
 - The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
+
+**Schema version (`esb`):** A small **grammar / document version** (e.g. `esb: "0.1"`) is appropriate so tooling knows how to parse the file. It is separate from component version policy (below).
+
+**Component `version` (optional, low-friction):** Humans often **omit** an exact semver. The grammar supports: **(a)** **no** `version` field—defaults come from **platform convention** (e.g. channel `latest`, tag policy, or defaults in the binding); **(b)** **attributes** such as `latest`, `stable`, or a **channel / track** name agreed in policy; **(c)** an **explicit pin** (semver, digest) when reproducibility, audit, or rollback requires it. Allowed tokens and defaults are **catalog / policy**, not something every lay author repeats.
+
+### Dependencies (`depends_on`)
+
+Each entry is a **logical artifact name**—the same class of identifier as namespaces and stores: a **blackbox** handle, not a type tag in the lay grammar. A name might stand for a **database**, a **service bus**, a **cache**, **another runnable component**, or other infrastructure; **the ESB does not distinguish**—the **binding** and platform metadata concretize what the name means.
+
+**Uniqueness:** Artifact names referenced from ESB (components, `depends_on`, shared stores, etc.) must be **unique within the deployment artifact catalog** so resolution is unambiguous.
+
+**Resolution:** Dependency names are **logical**, like namespaces. Deploy-time **environment** selects the **binding** that **concretizes** each name for this run (unless the catalog marks a name **global**—same rule as for namespaces).
+
+**Relationship to other ESBs:** When a dependency names **another deliverable component**, the orchestration graph may load **that component’s ESB** (or equivalent spec) in the same deploy wave—ordering and expansion are platform concerns, but **this** ESB still only holds the **opaque name**. When a dependency is **infrastructure-only** (e.g. a managed store, bus plane), there may be **no separate ESB document**—only **catalog rows and bindings**—which is still valid; the name stays in the same **logical** namespace of artifacts.
 
 ### Environment injection (outside ESB)
 
@@ -55,11 +69,11 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **Where it lives:** Deployment **invocation**—CI matrix, promote pipeline parameter, release CLI, infrastructure entrypoint, or equivalent—so the pipeline knows which binding row to use **together with** the ESB.
 
-**Resolution:** Combine **logical namespace** from ESB with **environment** from the pipeline into a **resolved context key**, e.g. **`<namespace>-<environment>`** → `acme-staging`, `acme-production`. That key selects the binding that **materializes** the logical reference into **physical** targets for this deploy. The joiner (`-`), ordering (`acme-staging` vs `staging-acme`), and escaping (if segments contain hyphens) are **platform conventions** fixed in the catalog—pick one system and apply it consistently.
+**Resolution:** Combine **logical namespace** from ESB with **environment** from the pipeline into a **resolved context key**, e.g. **`<namespace>-<environment>`** → `acme-staging`, `acme-production`. That key selects the binding that **materializes** the logical reference into **concrete** targets for this deploy. The joiner (`-`), ordering (`acme-staging` vs `staging-acme`), and escaping (if segments contain hyphens) are **platform conventions** fixed in the catalog—pick one system and apply it consistently.
 
 **Convention:** Treat the ESB **namespace** value as the **base segment only** (do not bake `staging` or `prod` into the ESB string). That avoids ambiguous double-suffix bugs and keeps “one ESB, many environments” literal.
 
-**`depends_on`:** Dependency names usually participate in the **same** resolution rule (per-environment materialization). If a dependency is **global** across environments, the catalog must say so explicitly—otherwise **assume** environment-scoped resolution.
+**`depends_on` resolution:** Dependency names follow the **same environment-scoped binding rules** as above unless the catalog marks a name **global**—see **Dependencies (`depends_on`)**.
 
 **Logic check:** If environment were **only** implicit (nowhere in pipeline or vault), deploys would be undefined. The ESB stays clean by moving that directive to **invocation**, not by deleting it from the system.
 
@@ -72,15 +86,15 @@ ESB + environment (from invocation, not in ESB file)  →  expanded / normalized
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** ESB **references** base **namespace** plus component identity (e.g. `acme`, `xyz`, `payux:1.2.3`); the pipeline supplies **environment**; **bindings** keyed by **resolved context** supply profile and wiring; the realizer **consumes** the expanded result. **Operational clarity** (e.g. “this is production”) comes from **explicit environment in invocation** + **versioned binding rows** for `*-production`, not from duplicating ESB files.
+**Relationship to named artifacts:** ESB **references** base **namespace**, component **`id`** (and **optional** `version` / channel), and **logical** dependency names; the pipeline supplies **environment**; **bindings** keyed by **resolved context** supply profile and wiring; the realizer **consumes** the expanded result. **Operational clarity** (e.g. “this is production”) comes from **explicit environment in invocation** + **versioned binding rows** for `*-production`, not from duplicating ESB files.
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
 ### Representative ESB examples (illustrative — for review)
 
-The blocks below are **not** a frozen schema. They show the **shape**: **component + base namespace** (+ optional *depends_on*). **Environment** is **omitted** on purpose—the pipeline provides it at deploy time (e.g. `staging` → resolved key `acme-staging`). *Profile* and data-plane defaults live in the **binding for that resolved key**. Field names and nesting are candidates for your feedback.
+The blocks below are **not** a frozen schema. They show the **shape**: **component + base namespace** (+ optional *depends_on*). **Environment** is **omitted** on purpose—the pipeline provides it at deploy time (e.g. `staging` → resolved key `acme-staging`). *Profile* and data-plane defaults live in the **binding for that resolved key**. **Component `version`** is often omitted or given as a channel (`latest`); a pin appears when you need one. Field names and nesting are candidates for your feedback.
 
-**Example A — minimal single component**
+**Example A — minimal single component (no version — platform default)**
 
 Same ESB for all environments; only invocation changes `environment`.
 
@@ -89,15 +103,13 @@ Same ESB for all environments; only invocation changes `environment`.
 esb: "0.1"
 component:
   id: payux
-  version: "1.2.3"
 namespace: acme
 # pipeline: environment=staging → binding key acme-staging
 # pipeline: environment=production → binding key acme-production
+# version: from policy / binding (e.g. latest) unless overridden
 ```
 
-**Example B — namespace as logical plane (e.g. OpenErgo)**
-
-Author names the plane; `open-ergo-worker` + `xyz` + pipeline environment → e.g. `xyz-staging`, `xyz-production`.
+**Example B — explicit pin when needed**
 
 ```yaml
 esb: "0.1"
@@ -107,30 +119,26 @@ component:
 namespace: xyz
 ```
 
-**Example C — named dependencies (stores, buses, sibling apps)**
-
-Dependencies are **references by name**; resolution typically applies the **same** environment (unless catalog marks a name global).
+**Example C — channel-style version + logical `depends_on` (any artifact kind)**
 
 ```yaml
 esb: "0.1"
 component:
   id: payux
-  version: "1.2.3"
+  version: latest
 namespace: acme
 depends_on:
   - ledger-store
   - payments-bus
 ```
 
-**Example D — stack slice (multiple components, shared namespace)**
-
-Multiple components share one **base namespace**; one pipeline invocation binds the whole slice to the same resolved context.
+**Example D — stack slice (mixed: default vs pinned)**
 
 ```yaml
 esb: "0.1"
 namespace: acme
 components:
-  - { id: payux-api, version: "1.2.3" }
+  - { id: payux-api }
   - { id: payux-worker, version: "1.2.3" }
 # pipeline supplies environment once for the whole document
 ```
