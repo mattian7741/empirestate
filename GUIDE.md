@@ -14,6 +14,10 @@
 
 **`concise/`** ([`concise/README.md`](concise/README.md)) is an **optional fast path**: dense platform-only summary (aspects, roadmap table, pointers to full `TENETS.md`). Use it for quick context; it **does not replace** `empirestate/TENETS.md` for implementation discipline.
 
+### Collaboration default: challenge breaks in logic
+
+When working from this corpus, **assistants and reviewers treat pushback as normal**: if a proposal contradicts **tenets**, **documented invariants**, or **coherent reasoning**—including when the latest message conflicts with an earlier constraint—**say so briefly and why** before treating it as settled. The point is **early correction**, not friction for its own sake. When intent genuinely changes, **update the record** (see Tenet 13: synthesize into coherent spec) instead of improvising around contradictions.
+
 ---
 
 ## 2. Starting **Payux** implementation

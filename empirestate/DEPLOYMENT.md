@@ -16,18 +16,18 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Named artifacts and implementation binding
 
-**Author-facing statements use names, not wiring.** **Namespaces** (logical deployment contexts), data planes, and similar **targets** are **named artifacts** in the spec (e.g. `xyz`, `acme-staging`). A component or manifest at the **highest layer** only asserts a relationship to that name—for example: *OpenErgo components run in **namespace `xyz`***. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
+**Author-facing statements use names, not wiring.** **Namespaces** (logical deployment contexts), data planes, and similar **targets** are **named artifacts**. The ESB carries a **base namespace** (e.g. `acme`, `xyz`); **environment** is **not** authored there (see **Environment injection** under ESB). After injection, the **resolved context** (e.g. `acme-staging`) selects a binding. Example phrasing: *OpenErgo components use **namespace `xyz`***—same ESB line for every environment. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
 
-**Note:** ESB **namespace** means a **named binding** for “where and under what defaults this runs”—not necessarily the same thing as a Kubernetes `metadata.namespace` (though a binding *may* set that as an implementation detail).
+**Note:** ESB **namespace** means a **logical handle** for “which slice of the platform this attaches to”—not necessarily the same thing as a Kubernetes `metadata.namespace` (though a binding *may* set that as an implementation detail).
 
-**Binding:** Each name resolves to a **technical implementation** stored elsewhere (version-controlled registry, env catalog, or materialized config). The binding is where **environment** (e.g. staging vs production), **profile** (sizing/tier), broker URL, vhost, credential references, tuning, and related defaults **live**—so the lay author does not repeat them. Example: `xyz` → *environment: production; profile: standard; OpenErgo transport is AMQP; broker URL …; vhost …; credential reference …; tuning …*. Replacing *how* `xyz` is realized updates **the binding for `xyz`**; consumers that say *run in `xyz`* stay unchanged.
+**Binding:** Each **resolved context key** maps to a **technical implementation** stored elsewhere (version-controlled registry, env catalog, or materialized config). That record holds **profile** (sizing/tier), broker URL, vhost, credential references, tuning, and any other concrete detail. Example: key `xyz-production` → *profile: standard; OpenErgo transport is AMQP; broker URL …; vhost …; credential reference …; tuning …*. Replacing *how* that context is realized updates **that binding row**; the ESB line *namespace `xyz`* stays unchanged across environments.
 
 **Separation:**
 
 | Layer | Says |
 |-------|------|
-| **Component / intent** | *Runs in **namespace `xyz`*** (or attach store **`ledger-db`**, etc.) |
-| **Named artifact + binding** | **`xyz`** is defined by **concrete** endpoints, secrets references, environment/profile defaults, images, playbooks, or generated low-level files |
+| **Component / intent** | *Runs with **namespace `acme`*** (or attach store **`ledger-db`**, etc.)—**same** intent document for staging and production |
+| **Resolved context + binding** | Pipeline supplies **environment**; resolver forms **`<namespace>-<environment>`** (or an equivalent rule) to load **concrete** endpoints, secrets references, profile, images, playbooks, or generated low-level files |
 | **Execution** | Docker, Ansible, cloud APIs, etc.—**means**, not the conceptual definition |
 
 **Goal:** Lowest barrier to entry for authors—**declare affiliation to a stable name**—while keeping **determinism and audit** in the binding layer so deployments remain reproducible.
@@ -36,36 +36,51 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Empire State Build (ESB)
 
-**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs, **where** (in logical terms), and **what it attaches to**—by **name**—while the system **infers** the rest via **named bindings**, conventions, and versioned rules.
+**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs, **which base namespace** it uses (environment-agnostic), and **what it attaches to**—by **name**—while the system **infers** the rest via **named bindings**, **pipeline-supplied environment**, and versioned rules.
 
 **Principle:** A human can describe a deployment with a **very small set of parameters**; the author does not treat Dockerfiles, inventory, or shell as the **source of truth**. Those artifacts are **materialized** to satisfy an end state derived from the ESB.
 
 **ESB document** (authoring layer):
 
-- Short, stable fields: e.g. **what** runs (application / component id + version or digest), **where** in logical terms (**namespace** name like `xyz` or `acme-staging`), and **dependencies** referenced by **name** (other apps, stores, buses).
-- **Environment**, **profile** (sizing/tier), and similar operational defaults are **not** repeated in ESB—they are **properties of the namespace binding**, maintained by operators or platform owners, not by the lay author.
+- Short, stable fields: e.g. **what** runs (application / component id + version or digest), **where** in logical terms (**base namespace** like `xyz` or `acme`—**without** embedding environment), and **dependencies** referenced by **name** (other apps, stores, buses).
+- **The same ESB is reused for every environment.** There must **not** be one ESB copy per environment; **environment** is supplied **outside** the ESB (see below).
+- **Profile** (sizing/tier) and other operational defaults **live in the binding** for the **resolved** context, not in the lay ESB—operators/platform owners maintain those records; the lay author does not duplicate them.
 - The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
+
+### Environment injection (outside ESB)
+
+**Directive:** *Which environment* (staging, production, …) **must** exist for a deploy to be defined—but it **does not** belong in the ESB file.
+
+**Where it lives:** Deployment **invocation**—CI matrix, promote pipeline parameter, release CLI, infrastructure entrypoint, or equivalent—so the pipeline knows which binding row to use **together with** the ESB.
+
+**Resolution:** Combine **base namespace** from ESB with **environment** from the pipeline into a **resolved context key**, e.g. **`<namespace>-<environment>`** → `acme-staging`, `acme-production`. The joiner (`-`), ordering (`acme-staging` vs `staging-acme`), and escaping (if segments contain hyphens) are **platform conventions** fixed in the catalog—pick one system and apply it consistently.
+
+**Convention:** Treat the ESB **namespace** value as the **base segment only** (do not bake `staging` or `prod` into the ESB string). That avoids ambiguous double-suffix bugs and keeps “one ESB, many environments” literal.
+
+**`depends_on`:** Dependency names usually participate in the **same** resolution rule (per-environment materialization). If a dependency is **global** across environments, the catalog must say so explicitly—otherwise **assume** environment-scoped resolution.
+
+**Logic check:** If environment were **only** implicit (nowhere in pipeline or vault), deploys would be undefined. The ESB stays clean by moving that directive to **invocation**, not by deleting it from the system.
 
 **Inference chain** (current stack direction):
 
 ```text
-ESB (lay descriptor)  →  expanded / normalized spec (machine-readable)  →  state realizer (e.g. Ansible)  →  concrete actions (Docker pull/run, files, systemd, APIs, …)  →  measured end state
+ESB + environment (from invocation, not in ESB file)  →  expanded / normalized spec (machine-readable)  →  state realizer (e.g. Ansible)  →  concrete actions (Docker pull/run, files, systemd, APIs, …)  →  measured end state
 ```
 
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** ESB **references** names (`xyz`, `acme-staging`, `payux:1.2.3`); **bindings** supply environment, profile, and wiring; the realizer **consumes** the expanded result and never asks the author for RabbitMQ URLs at the top. **Operational clarity** (e.g. “this is production”) usually comes from **distinct namespace names** and versioned bindings, not from duplicate fields in ESB.
+**Relationship to named artifacts:** ESB **references** base **namespace** plus component identity (e.g. `acme`, `xyz`, `payux:1.2.3`); the pipeline supplies **environment**; **bindings** keyed by **resolved context** supply profile and wiring; the realizer **consumes** the expanded result. **Operational clarity** (e.g. “this is production”) comes from **explicit environment in invocation** + **versioned binding rows** for `*-production`, not from duplicating ESB files.
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
 ### Representative ESB examples (illustrative — for review)
 
-The blocks below are **not** a frozen schema. They show the **shape** we want authors to think in: **component + namespace** (+ optional *depends_on*). *Environment*, *profile*, and data-plane defaults are **not** lay fields—they are defined in the **namespace binding** (hidden from the lay author). Field names and nesting are candidates for your feedback.
+The blocks below are **not** a frozen schema. They show the **shape**: **component + base namespace** (+ optional *depends_on*). **Environment** is **omitted** on purpose—the pipeline provides it at deploy time (e.g. `staging` → resolved key `acme-staging`). *Profile* and data-plane defaults live in the **binding for that resolved key**. Field names and nesting are candidates for your feedback.
 
 **Example A — minimal single component**
 
-A single service version; **namespace** selects the full context (environment, profile, URLs, secrets, image pull policy, etc.) from the binding catalog.
+Same ESB for all environments; only invocation changes `environment`.
 
 ```yaml
 # Illustrative only — field names TBD
@@ -73,12 +88,14 @@ esb: "0.1"
 component:
   id: payux
   version: "1.2.3"
-namespace: acme-staging
+namespace: acme
+# pipeline: environment=staging → binding key acme-staging
+# pipeline: environment=production → binding key acme-production
 ```
 
 **Example B — namespace as logical plane (e.g. OpenErgo)**
 
-Same idea as *OpenErgo runs in namespace `xyz`*: the author names the context; the binding carries environment, profile, broker URL, vhost, credential references, tuning.
+Author names the plane; `open-ergo-worker` + `xyz` + pipeline environment → e.g. `xyz-staging`, `xyz-production`.
 
 ```yaml
 esb: "0.1"
@@ -90,14 +107,14 @@ namespace: xyz
 
 **Example C — named dependencies (stores, buses, sibling apps)**
 
-Dependencies are **references by name**; each name resolves in the binding catalog (connection strings, queues, peer service discovery—not spelled out here).
+Dependencies are **references by name**; resolution typically applies the **same** environment (unless catalog marks a name global).
 
 ```yaml
 esb: "0.1"
 component:
   id: payux
   version: "1.2.3"
-namespace: acme-staging
+namespace: acme
 depends_on:
   - ledger-store
   - payments-bus
@@ -105,14 +122,15 @@ depends_on:
 
 **Example D — stack slice (multiple components, shared namespace)**
 
-Multiple components share one **namespace** so the pipeline expands one coherent slice; each row stays thin. Shared defaults (environment, profile, bus, …) come from that namespace’s binding once.
+Multiple components share one **base namespace**; one pipeline invocation binds the whole slice to the same resolved context.
 
 ```yaml
 esb: "0.1"
-namespace: acme-staging
+namespace: acme
 components:
   - { id: payux-api, version: "1.2.3" }
   - { id: payux-worker, version: "1.2.3" }
+# pipeline supplies environment once for the whole document
 ```
 
 ---
