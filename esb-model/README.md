@@ -26,9 +26,9 @@ This folder is **experimental**: YAML shape and field names follow the deploymen
 
 | Path | Role |
 |------|------|
-| **`ideal-system.esb.yaml`** | Rolling **ideal end-state** model (edit as the narrative grows). May include **`notes`** on a slice for exercise-only prose—**not** part of the formal ESB grammar in `empirestate/DEPLOYMENT.md` until promoted. |
+| **`ideal-system.esb.yaml`** | Rolling **ideal end-state** model (edit as the narrative grows). |
 | **`slices/`** | Optional: one file per major namespace/stack if the single file gets unwieldy. |
-| **`EVALUATION.md`** | Running notes: fit, gaps, fields we wish we had (created when first issues appear). |
+| **`EVALUATION.md`** | Running notes: fit, gaps, narrative challenges, fields we wish we had. |
 
 ---
 
@@ -45,4 +45,4 @@ Single source for ESB meaning: **[`empirestate/DEPLOYMENT.md`](../empirestate/DE
 
 ---
 
-**Current exercise:** CircuitLeagues PWA — M1 **auth + session** (see `ideal-system.esb.yaml` `meta` and `slices`).
+*Current focus:* CircuitLeagues PWA — M1 authentication & session (`ideal-system.esb.yaml`, `EVALUATION.md`).

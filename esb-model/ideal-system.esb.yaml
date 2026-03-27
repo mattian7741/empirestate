@@ -1,68 +1,70 @@
 # Ideal system — ESB exercise model
-# CircuitLeagues M1: PWA + passwordless auth/session (user narrative → revise as you litigate design).
-# Environment is NOT authored here (invocation only). See esb-model/README.md
+# CircuitLeagues (phase 1): PWA + passwordless OTP auth + session.
+# Environment NOT in file — supplied at deploy invocation only.
+# See esb-model/README.md | Narrative challenges: esb-model/EVALUATION.md
 
 esb: "0.1"
 
 meta:
-  id: ideal-system
-  product: circuitleagues
-  milestone: auth-session-m1
+  product: circuit-leagues
+  phase: auth-session-m1
   summary: >
-    Progressive web app (web-hosted; Android/iPhone/desktop). Initial scope: authentication and session
-    only. Passwordless: user enters email or phone; no separate registration step (user-emergent).
-    Login/logout writes go OpenErgo http-gateway → bus; code verify + session read path via consumption API
-    (not carried on the OpenErgo write pipeline). User profile / session / auth code material live in a
-    logical user datastore (central vs distributed — unspecified at ESB).
+    Progressive web app (Android, iPhone, desktop secondary); single initial capability:
+    user-emergent identity (no explicit registration), passwordless OTP via email/SMS.
+    Reads/verification via consumption API; writes/pipelines via OpenErgo HTTP gateway and bus.
+
+# Optional per-component `summary` is for humans (exercise); not strict ESB grammar.
 
 slices:
-  - namespace: circuitleagues
-    notes: >
-      Single product namespace for M1. openergo-bus is shared transport; user-datastore is the logical
-      store for profile + auth code + session material. Workflow narrative is in meta.summary and
-      esb-model/README.md (update when design changes).
+  - namespace: circuit-leagues
     components:
-      # PWA shell + static/hosting as one logical deployable (fine to split later).
-      - id: circuitleagues-web
+      - id: circuit-leagues-pwa
+        summary: >
+          PWA client — landing, identifier capture, OTP field, client session holder,
+          logout trigger to gateway.
         depends_on:
-          - circuit-auth-consumption-api
-          - openergo-http-gateway
-
-      # OpenErgo ingress for publish-style commands (login request, logout, outbound dispatch chain).
-      - id: openergo-http-gateway
+          - circuit-leagues-consumption-api
+          - open-ergo-http-gateway
+      - id: circuit-leagues-consumption-api
+        summary: >
+          Self-service read/verify path: submit OTP, establish server session;
+          not routed through OpenErgo (writes elsewhere use the bus).
         depends_on:
-          - openergo-bus
+          - circuit-leagues-auth-datastore
 
-      # Consumption path: user submits code; server validates, establishes session (client + server persistence).
-      - id: circuit-auth-consumption-api
+  - namespace: open-ergo
+    components:
+      - id: open-ergo-http-gateway
+        summary: >
+          Accepts auth-request and logout from client; 200 + bus publish for auth request;
+          bus publish for logout.
         depends_on:
-          - user-datastore
-
-      # Receives login-request event; generates code; persists to user store; publishes delivery event.
+          - open-ergo-bus
       - id: authcode-generator
+        summary: >
+          Consumes auth request from bus; generates OTP; persists to user schema;
+          publishes outbound delivery event (email/SMS path).
         depends_on:
-          - openergo-bus
-          - user-datastore
-
+          - open-ergo-bus
+          - circuit-leagues-auth-datastore
       - id: email-sender
+        summary: Consumes authcode delivery events; sends outbound email.
         depends_on:
-          - openergo-bus
-
+          - open-ergo-bus
+          - email-delivery
       - id: sms-sender
+        summary: Consumes authcode delivery events; sends outbound SMS.
         depends_on:
-          - openergo-bus
-
-      # Logout: receives command via gateway; rewrites event for persistence consumer.
+          - open-ergo-bus
+          - sms-delivery
       - id: logout-router-orchestrator
+        summary: >
+          Consumes logout from bus; republishes as session invalidation / upsert intent
+          for persistence.
         depends_on:
-          - openergo-bus
-
-      # General-purpose writer: applies session invalidation / upsert from bus (e.g. logout path).
-      - id: data-persister
+          - open-ergo-bus
+      - id: gp-data-persister
+        summary: General-purpose persister; applies session drop from orchestrated events.
         depends_on:
-          - openergo-bus
-          - user-datastore
-
-# Logical artifacts referenced above but not expressed as separate runnable components in M1:
-# - openergo-bus
-# - user-datastore
+          - open-ergo-bus
+          - circuit-leagues-auth-datastore
