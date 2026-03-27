@@ -1,11 +1,10 @@
-# Functional specifications
+# Functional specifications — redirect
 
-**Purpose:** Describe **how each application behaves** from a product perspective—user flows, screens, copy expectations, and boundaries—in **plain English**. These docs complement **`design/`** (engineering handoffs: APIs, persistence, sequencing).
+Per-application **functional** specifications are stored next to their **design** siblings under **`applications/<AppName>/`** as **`FUNCSPEC.md`** when they exist.
 
-| Document | Application |
-|----------|-------------|
-| [PAYUX.md](PAYUX.md) | Payux — payment gateway only (invoice → pay → receipt) |
+- **Index:** [applications/README.md](../applications/README.md)
+- **Payux:** [applications/Payux/FUNCSPEC.md](../applications/Payux/FUNCSPEC.md)
 
-**Boundary:** Functional specs state **what Payux is responsible for**. SKU management, cart, catalog, and entitlement provisioning are **other** applications; they are referenced only as **upstream/downstream neighbors**, not specified here.
+**Product truth:** `empirestate/BILLING.md` • **Detailed design:** [applications/Payux/DESIGN.md](../applications/Payux/DESIGN.md)
 
-**Product truth:** `empirestate/BILLING.md` • **Detailed design:** `../design/PAYUX.md`
+**Purpose:** Describe **how each application behaves** from a product perspective—flows, UX, boundaries—in plain English. These complement **`DESIGN.md`** (APIs, persistence, sequencing).

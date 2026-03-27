@@ -1,8 +1,8 @@
 # Detailed Design — SKU Management
 
-**Scope:** **SKU management only**—the subsystem that defines **sellable SKUs**, binds **application catalog concepts** to those SKUs, and resolves **prices**. **Not** shopping cart sessions, invoices, payment, or entitlement storage (those belong to `SHOPPING-CART.md` and `PAYUX.md`). **No OpenErgo** required for M1 unless you choose it.
+**Scope:** **SKU management only**—the subsystem that defines **sellable SKUs**, binds **application catalog concepts** to those SKUs, and resolves **prices**. **Not** shopping cart sessions, invoices, payment, or entitlement storage (those belong to `SHOPPING-CART.md` and `../Payux/DESIGN.md`). **No OpenErgo** required for M1 unless you choose it.
 
-**Handoff:** Implement per this document and `GUIDE.md`. Product truth: `empirestate/BILLING.md`, `empirestate/app-documentation/SKU-and-Cart.md`. Billing contract consumed by cart: `design/PAYUX.md` §2.1 (invoice shape—cart fills `amount_due` using prices from **this** system).
+**Handoff:** Implement per this document and `GUIDE.md`. Product truth: `empirestate/BILLING.md`, `SKU-and-Cart.md` (this folder). Billing contract consumed by cart: `../Payux/DESIGN.md` §2.1 (invoice shape—cart fills `amount_due` using prices from **this** system).
 
 **Deployment note:** May ship as a **service**, a **library** inside a combined “commerce” app, or alongside the cart in one white-labeled product. Boundaries in this doc are **logical**, not prescriptive of repo layout.
 
@@ -101,8 +101,8 @@ Per-tenant branding is optional here (mostly admin/API). **Cart and Payux** carr
 | Topic | Document |
 |-------|----------|
 | Ecosystem | `empirestate/BILLING.md` |
-| App-level stub | `empirestate/app-documentation/SKU-and-Cart.md` |
-| Cart & invoice | `design/SHOPPING-CART.md` |
-| Billing | `design/PAYUX.md` |
-| Design index | `design/README.md` |
+| App-level stub | `SKU-and-Cart.md` (this folder) |
+| Cart & invoice | `SHOPPING-CART.md` (this folder) |
+| Billing | `../Payux/DESIGN.md` |
+| Applications index | `../README.md` |
 | Agent constraints | `GUIDE.md` |

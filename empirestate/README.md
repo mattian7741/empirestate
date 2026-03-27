@@ -26,10 +26,9 @@ Documentation here is **not** end-user or developer documentation. Those are gen
 | **DEPLOYMENT.md** | Target-agnostic deployment; infrastructure as disposable |
 | **ROADMAP.md** | Strategic milestones; implementation order |
 | **BACKLOG.md** | Iterations and subtasks; tracks progress |
-| **APPLICATIONS.md** | Index of applications; links to app-documentation/ |
-| **app-documentation/** | One document per application (Payux, WishingWell, HotPotato, etc.) |
+| **APPLICATIONS.md** | Index of applications; links to `../applications/` |
 
-**Detailed design (implementation handoffs):** `../design/` — e.g. `../design/PAYUX.md` for Payux.
+**Per-application specs and designs:** [`../applications/`](../applications/README.md) — each app folder may include overview, `FUNCSPEC.md`, and `DESIGN.md`.
 
 Additional documents are introduced as needed.
 

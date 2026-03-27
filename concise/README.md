@@ -1,8 +1,8 @@
 # EmpireStack — Concise (platform only)
 
-Dense view of **core infrastructure and strategy**. **Excludes** consuming applications and the `empirestate/app-documentation/` catalog.
+Dense view of **core infrastructure and strategy**. **Excludes** consuming applications and the `../applications/` catalog.
 
-**Navigation:** Read [`../GUIDE.md`](../GUIDE.md) first for how to use the corpus. **Full corpus:** `../empirestate/` • **Implementation handoffs:** `../design/` • **Engineering spec:** `../core-platform-spec/`
+**Navigation:** Read [`../GUIDE.md`](../GUIDE.md) first for how to use the corpus. **Full corpus:** `../empirestate/` • **Application docs:** `../applications/` • **Engineering spec:** `../core-platform-spec/`
 
 `concise/` is a digest only; **`empirestate/TENETS.md`** remains mandatory for implementation discipline.
 

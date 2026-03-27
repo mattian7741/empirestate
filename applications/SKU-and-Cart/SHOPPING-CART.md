@@ -2,7 +2,7 @@
 
 **Scope:** **Shopping cart and checkout orchestration**—persists **basket** state, computes **balance**, builds the **invoice** for Payux, handles **return from payment**, and **hands off** to the host application to **grant entitlements** with mandatory **purchase provenance**. **Not** payment capture or ledger mint (Payux). **Not** authoritative product definitions (host) or long-term price book admin (SKU management)—but cart **calls** SKU management for **resolved prices**.
 
-**Handoff:** Implement per this document and `GUIDE.md`. Product truth: `empirestate/BILLING.md`, `empirestate/app-documentation/SKU-and-Cart.md`. **Invoice/receipt contracts:** `design/PAYUX.md`. **Prices:** `design/SKU-MANAGEMENT.md`.
+**Handoff:** Implement per this document and `GUIDE.md`. Product truth: `empirestate/BILLING.md`, `SKU-and-Cart.md` (this folder). **Invoice/receipt contracts:** `../Payux/DESIGN.md`. **Prices:** `SKU-MANAGEMENT.md` (this folder).
 
 **Deployment note:** Often combined with SKU management in one **white-labeled** commerce service; this doc describes the **cart** bounded context only.
 
@@ -54,7 +54,7 @@
 
 ## 3. Invoice assembly (Payux input)
 
-Align field names and types with **`design/PAYUX.md` §2.1**.
+Align field names and types with **`../Payux/DESIGN.md` §2.1**.
 
 **Invariant:** `amount_due` = **server-side** sum of priced lines (plus tax/shipping if modeled). **Never** trust browser-only totals.
 
@@ -137,8 +137,8 @@ Structured logs; propagate `cart_id`, `invoice_id`, `correlation_id` through Pay
 | Topic | Document |
 |-------|----------|
 | Ecosystem | `empirestate/BILLING.md` |
-| App-level stub | `empirestate/app-documentation/SKU-and-Cart.md` |
-| SKU & prices | `design/SKU-MANAGEMENT.md` |
-| Billing | `design/PAYUX.md` |
-| Design index | `design/README.md` |
+| App-level stub | `SKU-and-Cart.md` (this folder) |
+| SKU & prices | `SKU-MANAGEMENT.md` (this folder) |
+| Billing | `../Payux/DESIGN.md` |
+| Applications index | `../README.md` |
 | Agent constraints | `GUIDE.md` |

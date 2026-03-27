@@ -14,6 +14,24 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ---
 
+## Named artifacts and implementation binding
+
+**Author-facing statements use names, not wiring.** Environments, networks, data planes, and similar **targets** are **named artifacts** in the spec (e.g. `xyz`). A component or manifest at the **highest layer** only asserts a relationship to that name—for example: *OpenErgo components run on network **`xyz`***. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
+
+**Binding:** Each name resolves to a **technical implementation** stored elsewhere (version-controlled registry, env catalog, or materialized config). Example: `xyz` → *OpenErgo transport is AMQP; broker URL …; vhost …; credential reference …; tuning …*. Replacing *how* `xyz` is realized (different broker, host, or orchestration) updates **the binding for `xyz`**; consumers that say *run on `xyz`* stay unchanged.
+
+**Separation:**
+
+| Layer | Says |
+|-------|------|
+| **Component / intent** | *Runs on **`xyz`*** (or deploy to **`staging`**, attach store **`ledger-db`**, etc.) |
+| **Named artifact + binding** | **`xyz`** is defined by **concrete** endpoints, secrets references, images, playbooks, or generated low-level files |
+| **Execution** | Docker, Ansible, cloud APIs, etc.—**means**, not the conceptual definition |
+
+**Goal:** Lowest barrier to entry for authors—**declare affiliation to a stable name**—while keeping **determinism and audit** in the binding layer so deployments remain reproducible.
+
+---
+
 ## Core Principles
 
 ### Target Agnosticism from the Start

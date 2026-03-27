@@ -27,3 +27,5 @@ OpenErgo is the **substrate** for backend integration in EmpireStack. It provide
 ## Relationship to EmpireStack Aspects
 
 OpenErgo underpins the **event-driven nano services** aspect (see [[OVERVIEW]]). Nano services are implemented as OpenErgo components: declarative manifests, injected functions, and transport-agnostic deployment. Other EmpireStack aspects (distributed datastore, identity engine, billing gateway) will integrate via OpenErgo sinks and sources where backend coordination is required.
+
+**Payux + bus:** Checkout **handoff** to the browser and **Processor webhooks** still follow the **two-phase** payment model; the **post-settlement** saga (**receipt → entitlement → provision**) maps cleanly to **OpenErgo choreography** on the broker. See [`applications/Payux/WORKFLOW.md`](../applications/Payux/WORKFLOW.md) § **OpenErgo choreography (message bus, two-plane model)**.
