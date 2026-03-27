@@ -32,6 +32,30 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ---
 
+## Deployment descriptor grammar (principle and pipeline)
+
+**Principle:** A human can describe a deployment with a **very small set of parameters**; the system **infers** the rest from **named bindings**, conventions, and versioned rules. The author does not author Dockerfiles, inventory, or shell as the **source of truth**—those are **materialized** to satisfy an end state derived from the descriptor.
+
+**Lay descriptor** (authoring layer):
+
+- Short, stable fields: e.g. **what** runs (application / component id + version or digest), **where** in logical terms (**environment** name, **network** name like `xyz`, optional **profile**), and **dependencies** referenced by **name** (other apps, stores, buses).
+- The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
+
+**Inference chain** (current stack direction):
+
+```text
+Lay descriptor  →  expanded / normalized spec (machine-readable)  →  state realizer (e.g. Ansible)  →  concrete actions (Docker pull/run, files, systemd, APIs, …)  →  measured end state
+```
+
+- **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
+- **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
+
+**Relationship to named artifacts:** The lay descriptor **references** names (`staging`, `xyz`, `payux:1.2.3`); **bindings** supply the heavy detail; the realizer **consumes** the expanded result and never asks the author for RabbitMQ URLs at the top.
+
+**Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from descriptor through materialized artifacts.
+
+---
+
 ## Core Principles
 
 ### Target Agnosticism from the Start
