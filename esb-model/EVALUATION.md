@@ -13,5 +13,6 @@
 
 ## Protocol observations (ongoing)
 
+- **ESB = shape without semantics**; **deploy = resolve descriptors** (catalog, bindings, environment) until the graph is concrete. Captured in `empirestate/DEPLOYMENT.md` under **Shape before semantics**.
 - Exercise file `ideal-system.esb.yaml` is intentionally **topology-only**: namespaces and component `id`s with **no** `depends_on`, to reflect the baseline above.
 - Further structural feedback (nesting, aggregates, choreography vs topology) goes here until folded into `empirestate/DEPLOYMENT.md`.

@@ -42,6 +42,8 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **Principle:** A human can describe a deployment with a **very small set of parameters**; the author does not treat Dockerfiles, inventory, or shell as the **source of truth**. Those artifacts are **materialized** to satisfy an end state derived from the ESB.
 
+**Shape before semantics:** The ESB states the **shape** of the deployment you want (logical **namespaces** and **component** ids)—**without** having to know what a given component *is* or what a namespace *means*. **At deploy time**, **descriptors for those artifacts** (catalog entries, **bindings**, environment injection, and tooling) are **observed and resolved** so the opaque graph becomes **concrete** and executable.
+
 **ESB document** (authoring layer):
 
 - Short, stable fields: **what** runs (component `id` and **optional** `version`—see below) and **which logical namespace** (`xyz`, `acme`, …—**without** embedding environment).
