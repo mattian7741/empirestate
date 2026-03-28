@@ -1,24 +1,25 @@
-# ESB modeling — ideal system exercise
+# ESB modeling — protocol stress test
 
-**Purpose:** Capture **product / system end-state intent** in [Empire State Build (ESB)](../empirestate/DEPLOYMENT.md#empire-state-build-esb) form, then **stress-test** whether that grammar is sufficient to drive future **expanded spec + convergence** (realizer not defined here).
+**Purpose:** Exercise whether **[Empire State Build (ESB)](../empirestate/DEPLOYMENT.md#empire-state-build-esb)** can express **end-state “what”** with **minimal surface**, without pretending to capture **why** or hand-waving execution. Product specifics are **out of scope** for the YAML; they inform updates only indirectly.
 
-This folder is **experimental**: YAML shape and field names follow the deployment doc **until** the exercise proves we need changes.
+**Authority:** [`empirestate/DEPLOYMENT.md`](../empirestate/DEPLOYMENT.md).
 
 ---
 
 ## How we work
 
-1. **You** describe the ideal system in prose (capabilities, major pieces, dependencies, boundaries).
-2. **We** translate that into ESB: logical **namespaces**, **components**, **`depends_on`** (logical artifact names—databases, buses, sibling services, etc.), reusing **one ESB** across environments (**environment** only at invocation—not in these files).
-3. We **revise** `ideal-system.esb.yaml` (or split slices into extra files under `slices/` if it grows large).
-4. **Gaps**—things ESB cannot say cleanly—get noted in **Evaluation** (below) and may feed back into `empirestate/DEPLOYMENT.md`.
+1. You give **protocol/grammar feedback** (and optionally a **vignette** in prose elsewhere—not in the ESB file).
+2. We adjust **`ideal-system.esb.yaml`** and **`EVALUATION.md`**, then fold stable rules back into **`DEPLOYMENT.md`**.
 
-**Rules of the exercise**
+---
 
-- **Logical only** in YAML: no URLs, no cloud IDs, no pins unless you explicitly want a reproducible slice documented.
-- **Unique logical names** for every artifact the model references (components + `depends_on` targets).
-- **`esb`**: grammar/document version (fine to keep `0.1` while iterating).
-- **Component `version`**: optional; omit or use `latest` / channels unless a pin is intentional.
+## Rules for files in this folder
+
+| Rule | Detail |
+|------|---------|
+| **Lean YAML** | Only mechanical fields: **`esb`**, **`slices`**, **`namespace`**, **`components`**, **`id`**, optional **`version`**, and **`depends_on`** only when justified. |
+| **No “why”** | No `summary`, `product`, `meta` strategy, `#` comments, or docstrings in ESB YAML—those belong in **`EVALUATION.md`**, aspect docs, or applications. |
+| **Sparse `depends_on`** | Default **none**. Namespace + binding imply transport/capabilities (OpenErgo pattern); do not list the bus per component. Add `depends_on` only for **unambiguous** logical attachments the catalog cannot infer (rare). |
 
 ---
 
@@ -26,23 +27,12 @@ This folder is **experimental**: YAML shape and field names follow the deploymen
 
 | Path | Role |
 |------|------|
-| **`ideal-system.esb.yaml`** | Rolling **ideal end-state** model (edit as the narrative grows). |
-| **`slices/`** | Optional: one file per major namespace/stack if the single file gets unwieldy. |
-| **`EVALUATION.md`** | Running notes: fit, gaps, narrative challenges, fields we wish we had. |
+| **`ideal-system.esb.yaml`** | Minimal topology sample for grammar stress (not a product spec). |
+| **`slices/`** | Optional split if the sample grows. |
+| **`EVALUATION.md`** | Baseline rules + protocol gaps; **not** ESB content. |
 
 ---
 
-## Grammar authority
+## Non-goals
 
-Single source for ESB meaning: **[`empirestate/DEPLOYMENT.md`](../empirestate/DEPLOYMENT.md)** (logical vs concrete, environment injection, `depends_on`, optional component version).
-
----
-
-## Non-goals (for this folder)
-
-- **Binding catalog** (concrete resolution per `namespace` + environment)—out of scope here.
-- **Ansible / Docker / execution**—out of scope; the exercise tests **intent capture**, not a runner.
-
----
-
-*Current focus:* CircuitLeagues PWA — M1 authentication & session (`ideal-system.esb.yaml`, `EVALUATION.md`).
+- Binding catalogs, concrete IDs, realizers (Ansible, etc.)—see `DEPLOYMENT.md`.

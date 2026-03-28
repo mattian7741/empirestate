@@ -1,31 +1,17 @@
 # ESB exercise — evaluation notes
 
-Running log of **grammar fit**, **assumptions**, and **open product/engineering questions** while modeling CircuitLeagues.
+**Objective:** Stress-test the **ESB protocol** (lean “what” only), not product specifics. Product narrative, strategy, and correctness of any sample slice live **outside** the YAML.
 
 ---
 
-## CircuitLeagues M1 — auth & session (2026-03-27)
+## Baseline rules (established)
 
-### Captured in `ideal-system.esb.yaml`
+1. **No “why” in ESB** — No `summary`, `product`, `meta`, comments, or other documentation inside ESB artifacts. KV pairs are for **mechanical intent** only (`esb`, `namespace`, `id`, optional `version`, and rarely `depends_on`).
+2. **`depends_on` is sparse** — Default **omit**. Many edges are **implicit** from **namespace + binding** (e.g. OpenErgo: transport/capabilities materialized by the namespace; components do **not** declare the bus or peer producers/consumers). **OpenErgo-shaped components** assume **no** hard upstream/downstream declarations—they exist and act when events apply. Only add `depends_on` when a **logical attachment cannot be implied** by namespace rules (exceptions should be **rare**).
 
-- Two **logical namespaces**: `circuit-leagues` (PWA + consumption API), `open-ergo` (gateway, generators, senders, orchestrator, persister).
-- **Logical artifacts**: shared **`circuit-leagues-auth-datastore`** (user/profile + OTP + session material at logical level—physical layout TBD), **`open-ergo-bus`**, **`email-delivery`**, **`sms-delivery`**.
-- **Read vs write path** expressed implicitly via which components exist (consumption API vs bus-mediated writers).
+---
 
-### Challenges on the narrative (not blocking the exercise)
+## Protocol observations (ongoing)
 
-1. **“Second factor only”** — Operationally this is **identifier + channel OTP** (proof of reachability). That is a normal passwordless/magic-link family pattern; the risk set is **account enumeration**, **OTP brute force**, and **throttling**—uniform API responses and rate limits matter more than the naming.
-2. **Logout via async bus → persister** — **Session may remain valid on the server** until the persister runs. For competitive security, pair client-side clearance with **short session TTL**, **server-side revocation list**, or a **synchronous invalidation** path if you need immediate server kill.
-3. **Client session storage** — **httpOnly, secure cookies** beat **localStorage** for session tokens under typical XSS threat models; ESB does not encode this—belongs in **design** of `circuit-leagues-consumption-api` / PWA.
-4. **OTP lifecycle** — Single-use, short expiry, constant-time verify, and lockout policy are **implementation** concerns; the ESB only names **`authcode-generator`** and the datastore.
-
-### ESB grammar gaps noticed
-
-- **No first-class “workflow step” or sequence** — The listed order (landing → gateway → generator → sender → verify) is **prose + architecture**, not encoded. Acceptable for M1 if we accept ESB as **topology**, not **choreography**.
-- **No “channel” dimension** — Email vs SMS is **routing inside** `authcode-generator` / bus message types / sender subscription—could add logical artifacts later if we need to model them separately.
-- **Hosting for PWA static assets** — Omitted as a dependency; can add **`circuit-leagues-web-host`** (or similar) when static hosting is its own deployable.
-
-### Next modeling increments
-
-- Add **web host** / CDN logical artifact if deployment splits **PWA shell** from **API** origin.
-- Split **`circuit-leagues-auth-datastore`** if product truth later separates **profile** vs **session** stores at the **logical** layer.
+- Exercise file `ideal-system.esb.yaml` is intentionally **topology-only**: namespaces and component `id`s with **no** `depends_on`, to reflect the baseline above.
+- Further structural feedback (nesting, aggregates, choreography vs topology) goes here until folded into `empirestate/DEPLOYMENT.md`.

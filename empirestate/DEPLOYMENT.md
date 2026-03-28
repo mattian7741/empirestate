@@ -38,15 +38,17 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Empire State Build (ESB)
 
-**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs, **which base namespace** it uses (environment-agnostic), and **what it attaches to**—by **name**—while the system **infers** the rest via **named bindings**, **pipeline-supplied environment**, and versioned rules.
+**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs (component identities under a **logical namespace**), and **optionally** a **sparse** set of logical **`depends_on`** edges—only when the binding cannot imply them—while the system **infers** the rest via **named bindings**, **pipeline-supplied environment**, and versioned rules.
 
 **Principle:** A human can describe a deployment with a **very small set of parameters**; the author does not treat Dockerfiles, inventory, or shell as the **source of truth**. Those artifacts are **materialized** to satisfy an end state derived from the ESB.
 
 **ESB document** (authoring layer):
 
-- Short, stable fields: e.g. **what** runs (application / component `id` and **optional** `version`—see below), **which logical namespace** (`xyz`, `acme`, …—**without** embedding environment), and **dependencies** referenced by **name** (see **`depends_on`** below).
-- **The same ESB is reused for every environment.** There must **not** be one ESB copy per environment; **environment** is supplied **outside** the ESB (see below).
-- **Profile** (sizing/tier) and other operational defaults **live in the binding** for the **resolved** context, not in the lay ESB—operators/platform owners maintain those records; the lay author does not duplicate them.
+- Short, stable fields: **what** runs (component `id` and **optional** `version`—see below) and **which logical namespace** (`xyz`, `acme`, …—**without** embedding environment).
+- **`depends_on`:** **omit by default.** Use only when a **logical attachment** cannot be inferred from **namespace + binding** rules (exceptions should be **rare**); see **Dependencies (`depends_on`)** below.
+- **No “why” in ESB:** No product essays, `summary`, `meta` strategy fields, or inline documentation in the artifact—ESB captures **deploy graph “what”**, not rationale. Strategy and narrative live **outside** the ESB (aspect docs, design files, evaluation notes).
+- **The same ESB is reused for every environment.** **Environment** is supplied **outside** the ESB (see below).
+- **Profile** (sizing/tier) and other operational defaults **live in the binding** for the **resolved** context, not in the lay ESB.
 - The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
 
 **Schema version (`esb`):** A small **grammar / document version** (e.g. `esb: "0.1"`) is appropriate so tooling knows how to parse the file. It is separate from component version policy (below).
@@ -55,13 +57,15 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ### Dependencies (`depends_on`)
 
-Each entry is a **logical artifact name**—the same class of identifier as namespaces and stores: a **blackbox** handle, not a type tag in the lay grammar. A name might stand for a **database**, a **service bus**, a **cache**, **another runnable component**, or other infrastructure; **the ESB does not distinguish**—the **binding** and platform metadata concretize what the name means.
+**Sparse use is the default.** The list exists for **logical edges the namespace + binding do not imply**. Many capabilities (message bus reachability, channel credentials, default datastore handles) are **materialized by the binding** for the component’s **namespace**—components **do not** declare the bus, mailer, or peers **per OpenErgo-style design**: they **react when applicable** without hard-coded upstream/downstream wiring in the ESB.
 
-**Uniqueness:** Artifact names referenced from ESB (components, `depends_on`, shared stores, etc.) must be **unique within the deployment artifact catalog** so resolution is unambiguous.
+When **`depends_on` appears**, each entry is still a **logical artifact name** (blackbox; type is **not** tagged in ESB—the **binding** concretizes).
 
-**Resolution:** Dependency names are **logical**, like namespaces. Deploy-time **environment** selects the **binding** that **concretizes** each name for this run (unless the catalog marks a name **global**—same rule as for namespaces).
+**Uniqueness:** Names used in `depends_on` must remain **unique in the artifact catalog** when present.
 
-**Relationship to other ESBs:** When a dependency names **another deliverable component**, the orchestration graph may load **that component’s ESB** (or equivalent spec) in the same deploy wave—ordering and expansion are platform concerns, but **this** ESB still only holds the **opaque name**. When a dependency is **infrastructure-only** (e.g. a managed store, bus plane), there may be **no separate ESB document**—only **catalog rows and bindings**—which is still valid; the name stays in the same **logical** namespace of artifacts.
+**Resolution:** If present, dependency names follow the **same environment-scoped binding rules** as namespaces unless the catalog marks a name **global**.
+
+**Rare cross-graph case:** When a deliverable truly needs a **named** logical attachment that **cannot** be implied (e.g. a **foreign** namespace’s store), a **minimal** `depends_on` may list it—**proof** in the expanded spec that the exception earned its place.
 
 ### Environment injection (outside ESB)
 
@@ -73,7 +77,7 @@ Each entry is a **logical artifact name**—the same class of identifier as name
 
 **Convention:** Treat the ESB **namespace** value as the **base segment only** (do not bake `staging` or `prod` into the ESB string). That avoids ambiguous double-suffix bugs and keeps “one ESB, many environments” literal.
 
-**`depends_on` resolution:** Dependency names follow the **same environment-scoped binding rules** as above unless the catalog marks a name **global**—see **Dependencies (`depends_on`)**.
+**`depends_on` + environment:** If `depends_on` is present, those names follow the **same environment-scoped binding rules** as above unless the catalog marks a name **global**—see **Dependencies (`depends_on`)**.
 
 **Logic check:** If environment were **only** implicit (nowhere in pipeline or vault), deploys would be undefined. The ESB stays clean by moving that directive to **invocation**, not by deleting it from the system.
 
@@ -86,29 +90,23 @@ ESB + environment (from invocation, not in ESB file)  →  expanded / normalized
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** ESB **references** base **namespace**, component **`id`** (and **optional** `version` / channel), and **logical** dependency names; the pipeline supplies **environment**; **bindings** keyed by **resolved context** supply profile and wiring; the realizer **consumes** the expanded result. **Operational clarity** (e.g. “this is production”) comes from **explicit environment in invocation** + **versioned binding rows** for `*-production`, not from duplicating ESB files.
+**Relationship to named artifacts:** ESB **references** base **namespace** and component **`id`** (and **optional** `version` / channel); **`depends_on`** is **optional and usually empty**. The pipeline supplies **environment**; **bindings** keyed by **resolved context** supply transport, stores, channels, profile, and wiring implied by the namespace; the realizer **consumes** the expanded result.
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
-**Exercise:** An evolving **ideal-system** model in YAML lives under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md)) to evaluate whether ESB captures full product end-state intent before low-level execution is defined.
+**Exercise:** A **protocol stress-test** model lives under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md))—**lean YAML only** (no narrative inside the artifact). It evaluates the grammar, not any specific product.
 
 ### Representative ESB examples (illustrative — for review)
 
-The blocks below are **not** a frozen schema. They show the **shape**: **component + base namespace** (+ optional *depends_on*). **Environment** is **omitted** on purpose—the pipeline provides it at deploy time (e.g. `staging` → resolved key `acme-staging`). *Profile* and data-plane defaults live in the **binding for that resolved key**. **Component `version`** is often omitted or given as a channel (`latest`); a pin appears when you need one. Field names and nesting are candidates for your feedback.
+Not a frozen schema. **Shape:** `esb` + **namespace** + **component `id`**; **`depends_on` omitted** unless you are demonstrating a **rare** implied exception. **Environment** is never in-file. **`version`** optional.
 
-**Example A — minimal single component (no version — platform default)**
-
-Same ESB for all environments; only invocation changes `environment`.
+**Example A — single component, default version implied by binding**
 
 ```yaml
-# Illustrative only — field names TBD
 esb: "0.1"
 component:
   id: payux
 namespace: acme
-# pipeline: environment=staging → binding key acme-staging
-# pipeline: environment=production → binding key acme-production
-# version: from policy / binding (e.g. latest) unless overridden
 ```
 
 **Example B — explicit pin when needed**
@@ -121,7 +119,7 @@ component:
 namespace: xyz
 ```
 
-**Example C — channel-style version + logical `depends_on` (any artifact kind)**
+**Example C — channel-style version; no `depends_on` (ledger and bus implied by namespace + binding)**
 
 ```yaml
 esb: "0.1"
@@ -129,9 +127,6 @@ component:
   id: payux
   version: latest
 namespace: acme
-depends_on:
-  - ledger-store
-  - payments-bus
 ```
 
 **Example D — stack slice (mixed: default vs pinned)**
@@ -142,7 +137,17 @@ namespace: acme
 components:
   - { id: payux-api }
   - { id: payux-worker, version: "1.2.3" }
-# pipeline supplies environment once for the whole document
+```
+
+**Example E — exceptional `depends_on` (only when catalog rules cannot imply the edge)**
+
+```yaml
+esb: "0.1"
+component:
+  id: edge-router
+  namespace: acme
+  depends_on:
+    - foreign-audit-sink
 ```
 
 ---
