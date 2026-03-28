@@ -1,0 +1,4 @@
+esb: "0.1"
+id: open-ergo-data
+artifacts:
+  - gp-data-persister

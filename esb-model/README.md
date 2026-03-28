@@ -1,25 +1,24 @@
 # ESB modeling — protocol stress test
 
-**Purpose:** Exercise whether **[Empire State Build (ESB)](../empirestate/DEPLOYMENT.md#empire-state-build-esb)** can express **end-state “what”** with **minimal surface**, without pretending to capture **why** or hand-waving execution. Product specifics are **out of scope** for the YAML; they inform updates only indirectly.
-
-**Authority:** [`empirestate/DEPLOYMENT.md`](../empirestate/DEPLOYMENT.md).
+**Purpose:** Exercise **[Empire State Build (ESB)](../empirestate/DEPLOYMENT.md#empire-state-build-esb)** as **pure membership**: **domains** (`id`) and **artifact string lists**, with **recursive** token→definition lookup. **How** / **where** are out of scope here.
 
 ---
 
 ## How we work
 
-1. You give **protocol/grammar feedback** (and optionally a **vignette** in prose elsewhere—not in the ESB file).
-2. We adjust **`ideal-system.esb.yaml`** and **`EVALUATION.md`**, then fold stable rules back into **`DEPLOYMENT.md`**.
+1. You give **protocol feedback** (and prose **outside** YAML if needed).
+2. We adjust **`ideal-system.esb.yaml`**, **`definitions/*.esb.yaml`**, and **`EVALUATION.md`**; stable rules go to **`DEPLOYMENT.md`**.
 
 ---
 
-## Rules for files in this folder
+## Rules for YAML in this folder
 
 | Rule | Detail |
-|------|---------|
-| **Lean YAML** | Only mechanical fields: **`esb`**, **`slices`**, **`namespace`**, **`artifacts`** (string or mapping with **`id`**, optional **`version`**, **`depends_on`**, **`esb`**), no narrative. |
-| **No “why”** | No `summary`, `product`, `meta` strategy, `#` comments, or docstrings in ESB YAML—those belong in **`EVALUATION.md`**, aspect docs, or applications. |
-| **Sparse `depends_on`** | Default **none**. Namespace + binding imply transport/capabilities (OpenErgo pattern); do not list the bus per component. Add `depends_on` only for **unambiguous** logical attachments the catalog cannot infer (rare). |
+|------|--------|
+| **Domains + strings** | **`domains`**: list of `{ id, artifacts }` where **`artifacts` is only strings**. Or **one** `{ esb, id, artifacts }` per file. |
+| **No “why”** | No comments, summaries, or extra keys in `.esb.yaml`. |
+| **Recursion** | Each token must match a **definition**: another document with root **`id`** equal to that token (see **`definitions/`**). Lookup rules are **platform** concern. |
+| **No per-member maps** | No `- id: foo` under **`artifacts`**—only `- foo`. |
 
 ---
 
@@ -27,12 +26,12 @@
 
 | Path | Role |
 |------|------|
-| **`ideal-system.esb.yaml`** | Minimal topology sample for grammar stress (not a product spec). |
-| **`slices/`** | Optional split if the sample grows. |
-| **`EVALUATION.md`** | Baseline rules + protocol gaps; **not** ESB content. |
+| **`ideal-system.esb.yaml`** | Top **domains** sample (protocol only). |
+| **`definitions/`** | One file per **expandable** token (`id` matches filename stem by convention in docs—tooling defines exact index). |
+| **`EVALUATION.md`** | Baseline + gaps; not ESB content. |
 
 ---
 
 ## Non-goals
 
-- Binding catalogs, concrete IDs, realizers (Ansible, etc.)—see `DEPLOYMENT.md`.
+Binding catalogs, realizers—see `empirestate/DEPLOYMENT.md`.
