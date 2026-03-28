@@ -7,7 +7,7 @@
 ## How we work
 
 1. You give **protocol feedback** (and prose **outside** YAML if needed).
-2. We adjust **`ideal-system.esb.yaml`**, **`definitions/*.esb.yaml`**, and **`EVALUATION.md`**; stable rules go to **`DEPLOYMENT.md`**.
+2. We adjust **`ideal-system.esb.yaml`**, optional **`definitions/*.esb.yaml`**, and **`EVALUATION.md`**; stable rules go to **`DEPLOYMENT.md`**.
 
 ---
 
@@ -17,7 +17,7 @@
 |------|--------|
 | **Domains + strings** | **`domains`**: list of `{ id, artifacts }` where **`artifacts` is only strings**. Or **one** `{ esb, id, artifacts }` per file. |
 | **No “why”** | No comments, summaries, or extra keys in `.esb.yaml`. |
-| **Recursion** | Each token must match a **definition**: another document with root **`id`** equal to that token (see **`definitions/`**). Lookup rules are **platform** concern. |
+| **Recursion** | Each token matches a **`domains`** row (same file or another file under **`definitions/`**) whose **`id`** equals that token. |
 | **No per-member maps** | No `- id: foo` under **`artifacts`**—only `- foo`. |
 
 ---
@@ -26,8 +26,8 @@
 
 | Path | Role |
 |------|------|
-| **`ideal-system.esb.yaml`** | Top **domains** sample (protocol only). |
-| **`definitions/`** | One file per **expandable** token (`id` matches filename stem by convention in docs—tooling defines exact index). |
+| **`ideal-system.esb.yaml`** | Layered sample: **lay root** → **application system** → **web vs store** tokens vs **OpenErgo bundles** → **worker** leaves; **`platform-capabilities`** for logical managed-style tokens. |
+| **`definitions/`** | Optional: split-out **`id`** bodies when not inline as sibling **`domains`** rows (may be empty). |
 | **`EVALUATION.md`** | Baseline + gaps; not ESB content. |
 
 ---

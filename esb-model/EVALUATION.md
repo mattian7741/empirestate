@@ -15,7 +15,7 @@
 
 ## Protocol observations (ongoing)
 
-- **Lookup:** Token `open-ergo-auth` → definition with `id: open-ergo-auth` (sibling **`domains`** row in `ideal-system.esb.yaml`, or split file under `definitions/`—**tooling** picks the index).
+- **Lookup:** Token → sibling **`domains`** row with matching **`id`** (all inline in `ideal-system.esb.yaml` today) or optional **`definitions/*.esb.yaml`**.
 
 ---
 
