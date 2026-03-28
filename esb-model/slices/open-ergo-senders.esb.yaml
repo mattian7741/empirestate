@@ -1,0 +1,4 @@
+esb: "0.1"
+artifacts:
+  - id: email-sender
+  - id: sms-sender

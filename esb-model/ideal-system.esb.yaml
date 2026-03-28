@@ -1,14 +1,15 @@
 esb: "0.1"
 slices:
   - namespace: circuit-leagues
-    components:
+    artifacts:
       - id: circuit-leagues-pwa
       - id: circuit-leagues-consumption-api
   - namespace: open-ergo
-    components:
-      - id: open-ergo-http-gateway
-      - id: authcode-generator
-      - id: email-sender
-      - id: sms-sender
-      - id: logout-router-orchestrator
-      - id: gp-data-persister
+    artifacts:
+      - open-ergo-http-gateway
+      - id: open-ergo-auth
+        esb: slices/open-ergo-auth.esb.yaml
+      - id: open-ergo-senders
+        esb: slices/open-ergo-senders.esb.yaml
+      - id: open-ergo-data
+        esb: slices/open-ergo-data.esb.yaml

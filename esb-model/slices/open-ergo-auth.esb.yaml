@@ -1,0 +1,4 @@
+esb: "0.1"
+artifacts:
+  - id: authcode-generator
+  - id: logout-router-orchestrator

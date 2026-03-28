@@ -16,7 +16,7 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Named artifacts and implementation binding
 
-**Author-facing statements use names, not wiring.** **Namespaces** (logical deployment contexts), data planes, and similar **targets** are **named artifacts**. The ESB carries a **base namespace** (e.g. `acme`, `xyz`); **environment** is **not** authored there (see **Environment injection** under ESB). After injection, the **resolved context** (e.g. `acme-staging`) selects a binding. Example phrasing: *OpenErgo components use **namespace `xyz`***—same ESB line for every environment. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
+**Author-facing statements use names, not wiring.** **Namespaces** (logical deployment contexts), data planes, and similar **targets** are **named artifacts**. The ESB carries a **base namespace** (e.g. `acme`, `xyz`); **environment** is **not** authored there (see **Environment injection** under ESB). After injection, the **resolved context** (e.g. `acme-staging`) selects a binding. Example phrasing: *OpenErgo deployables use **namespace `xyz`***—same ESB line for every environment. No RabbitMQ URLs, no Docker syntax, no vendor API detail at that layer.
 
 **Note:** ESB **namespace** means a **logical handle** for “which slice of the platform this attaches to”—not necessarily the same thing as a Kubernetes `metadata.namespace` (though a binding *may* set that as an implementation detail).
 
@@ -28,7 +28,7 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 | Layer | Says |
 |-------|------|
-| **Component / intent** | *Runs with **namespace `acme`*** (or attach store **`ledger-db`**, etc.)—**logical** only; **same** intent document for staging and production |
+| **Artifact / intent** | *Runs with **namespace `acme`*** (or attach store **`ledger-db`**, etc.)—**logical** only; **same** intent document for staging and production |
 | **Resolved context + binding** | Pipeline supplies **environment**; resolver forms **`<namespace>-<environment>`** (or an equivalent rule) to load **concrete** endpoints, secrets references, profile, images, playbooks, or generated low-level files |
 | **Execution** | Docker, Ansible, cloud APIs, etc.—**means**, not the conceptual definition |
 
@@ -38,32 +38,48 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Empire State Build (ESB)
 
-**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs (component identities under a **logical namespace**), and **optionally** a **sparse** set of logical **`depends_on`** edges—only when the binding cannot imply them—while the system **infers** the rest via **named bindings**, **pipeline-supplied environment**, and versioned rules.
+**Empire State Build (ESB)** is the name of the **lay deployment descriptor grammar**: the smallest human-facing surface that states **what** runs (**artifact** identities grouped under a **logical namespace**), **recursively** decomposable, and **optionally** a **sparse** set of logical **`depends_on`** edges—only when the binding cannot imply them—while the system **infers** the rest via **named bindings**, **pipeline-supplied environment**, and versioned rules.
 
 **Principle:** A human can describe a deployment with a **very small set of parameters**; the author does not treat Dockerfiles, inventory, or shell as the **source of truth**. Those artifacts are **materialized** to satisfy an end state derived from the ESB.
 
-**Shape before semantics:** The ESB states the **shape** of the deployment you want (logical **namespaces** and **component** ids)—**without** having to know what a given component *is* or what a namespace *means*. **At deploy time**, **descriptors for those artifacts** (catalog entries, **bindings**, environment injection, and tooling) are **observed and resolved** so the opaque graph becomes **concrete** and executable.
+**Shape before semantics:** The ESB states the **shape** of the deployment you want (logical **namespaces** and **artifact** ids)—**without** having to know what a given artifact *is* or what a namespace *means*. **At deploy time**, **descriptors for those artifacts** (catalog entries, **bindings**, environment injection, and tooling) are **observed and resolved** so the opaque graph becomes **concrete** and executable.
 
 **ESB document** (authoring layer):
 
-- Short, stable fields: **what** runs (component `id` and **optional** `version`—see below) and **which logical namespace** (`xyz`, `acme`, …—**without** embedding environment).
+- **Topology:** **`slices`** — each item has a **`namespace`** and an **`artifacts`** list (replaces a flat `components` list).
+- **Leaves:** each **`artifacts`** entry is either a **string** (shorthand **`id`**) or a **mapping** with required **`id`**, optional **`version`**, optional **`depends_on`**, optional **`esb`** (see **Artifacts and recursion**).
 - **`depends_on`:** **omit by default.** Use only when a **logical attachment** cannot be inferred from **namespace + binding** rules (exceptions should be **rare**); see **Dependencies (`depends_on`)** below.
 - **No “why” in ESB:** No product essays, `summary`, `meta` strategy fields, or inline documentation in the artifact—ESB captures **deploy graph “what”**, not rationale. Strategy and narrative live **outside** the ESB (aspect docs, design files, evaluation notes).
 - **The same ESB is reused for every environment.** **Environment** is supplied **outside** the ESB (see below).
 - **Profile** (sizing/tier) and other operational defaults **live in the binding** for the **resolved** context, not in the lay ESB.
 - The grammar starts **minimal** and **grows only** when a real gap appears; every new field must earn its place (see `TENETS.md`).
 
-**Schema version (`esb`):** A small **grammar / document version** (e.g. `esb: "0.1"`) is appropriate so tooling knows how to parse the file. It is separate from component version policy (below).
+**Schema version (`esb`):** A small **grammar / document version** (e.g. `esb: "0.1"`) is appropriate so tooling knows how to parse the file. It is separate from artifact version policy (below).
 
-**Component `version` (optional, low-friction):** Humans often **omit** an exact semver. The grammar supports: **(a)** **no** `version` field—defaults come from **platform convention** (e.g. channel `latest`, tag policy, or defaults in the binding); **(b)** **attributes** such as `latest`, `stable`, or a **channel / track** name agreed in policy; **(c)** an **explicit pin** (semver, digest) when reproducibility, audit, or rollback requires it. Allowed tokens and defaults are **catalog / policy**, not something every lay author repeats.
+**Artifact `version` (optional, low-friction):** Humans often **omit** an exact semver. The grammar supports: **(a)** **no** `version` field—defaults come from **platform convention** (e.g. channel `latest`, tag policy, or defaults in the binding); **(b)** **attributes** such as `latest`, `stable`, or a **channel / track** name agreed in policy; **(c)** an **explicit pin** (semver, digest) when reproducibility, audit, or rollback requires it. Allowed tokens and defaults are **catalog / policy**, not something every lay author repeats.
+
+### Artifacts and recursion
+
+Under each **`namespace`**, **`artifacts`** is an ordered list of **artifact entries**:
+
+| Form | Meaning |
+|------|---------|
+| **String** | Shorthand for **`id`**: e.g. `open-ergo-http-gateway` ≡ `id: open-ergo-http-gateway`. |
+| **Mapping** | At minimum **`id`**; optional **`version`**, **`depends_on`**; optional **`esb`** pointing to a **child ESB fragment** file (path relative to the **including** file unless tooling defines a repository root). |
+
+**Child fragment:** A document that contains **`esb`** and a root-level **`artifacts`** list **only** (no **`slices`** in the fragment). The expander **loads** the fragment and **inlines** its entries into the **same logical namespace** as the parent **`slices[]`** row—so a composite bundle (e.g. `open-ergo-auth`) is **one line** in the parent file and **many leaves** after expansion. Whether the composite **`id`** remains a **named bundle** in the catalog for bindings is **platform convention**; the lay ESB stays thin.
+
+**Inline nesting (optional):** A mapping may alternatively carry a nested **`artifacts`** list instead of **`esb`**—same inline/expansion rules—if a separate file is unnecessary. **Not** both `esb` and inline `artifacts` on one entry unless a future grammar version defines precedence; **pick one** per artifact.
+
+**Cycles:** **Invalid.** An **`esb`** reference chain must not loop; the expander **rejects** cycles.
 
 ### Dependencies (`depends_on`)
 
-**Sparse use is the default.** The list exists for **logical edges the namespace + binding do not imply**. Many capabilities (message bus reachability, channel credentials, default datastore handles) are **materialized by the binding** for the component’s **namespace**—components **do not** declare the bus, mailer, or peers **per OpenErgo-style design**: they **react when applicable** without hard-coded upstream/downstream wiring in the ESB.
+**Sparse use is the default.** The list exists for **logical edges the namespace + binding do not imply**. Many capabilities (message bus reachability, channel credentials, default datastore handles) are **materialized by the binding** for the **slice’s** **namespace**—artifacts **do not** declare the bus, mailer, or peers **per OpenErgo-style design**: they **react when applicable** without hard-coded upstream/downstream wiring in the ESB.
 
 When **`depends_on` appears**, each entry is still a **logical artifact name** (blackbox; type is **not** tagged in ESB—the **binding** concretizes).
 
-**Uniqueness:** Names used in `depends_on` must remain **unique in the artifact catalog** when present.
+**Uniqueness:** Every **`id`** (after **flattening** `esb` fragments) and every name used in `depends_on` must remain **unique in the artifact catalog** for that deploy graph when present.
 
 **Resolution:** If present, dependency names follow the **same environment-scoped binding rules** as namespaces unless the catalog marks a name **global**.
 
@@ -92,7 +108,7 @@ ESB + environment (from invocation, not in ESB file)  →  expanded / normalized
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** ESB **references** base **namespace** and component **`id`** (and **optional** `version` / channel); **`depends_on`** is **optional and usually empty**. The pipeline supplies **environment**; **bindings** keyed by **resolved context** supply transport, stores, channels, profile, and wiring implied by the namespace; the realizer **consumes** the expanded result.
+**Relationship to named artifacts:** ESB **references** base **namespace** and artifact **`id`** (and **optional** `version` / channel), **recursively** expanded from **`esb`** fragments; **`depends_on`** is **optional and usually empty**. The pipeline supplies **environment**; **bindings** keyed by **resolved context** supply transport, stores, channels, profile, and wiring implied by the namespace; the realizer **consumes** the expanded result.
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
@@ -100,56 +116,74 @@ ESB + environment (from invocation, not in ESB file)  →  expanded / normalized
 
 ### Representative ESB examples (illustrative — for review)
 
-Not a frozen schema. **Shape:** `esb` + **namespace** + **component `id`**; **`depends_on` omitted** unless you are demonstrating a **rare** implied exception. **Environment** is never in-file. **`version`** optional.
+Not a frozen schema. **Canonical shape:** `esb` + **`slices`** → **`namespace`** + **`artifacts`**. **Environment** is never in-file. **`depends_on`** omitted unless demonstrating a **rare** exception. **`version`** optional on mapping entries.
 
-**Example A — single component, default version implied by binding**
+**Example A — single artifact in one slice**
 
 ```yaml
 esb: "0.1"
-component:
-  id: payux
-namespace: acme
+slices:
+  - namespace: acme
+    artifacts:
+      - id: payux
 ```
 
-**Example B — explicit pin when needed**
+**Example B — explicit pin**
 
 ```yaml
 esb: "0.1"
-component:
-  id: open-ergo-worker
-  version: "0.9.1"
-namespace: xyz
+slices:
+  - namespace: xyz
+    artifacts:
+      - id: open-ergo-worker
+        version: "0.9.1"
 ```
 
-**Example C — channel-style version; no `depends_on` (ledger and bus implied by namespace + binding)**
+**Example C — string shorthand + channel version**
 
 ```yaml
 esb: "0.1"
-component:
-  id: payux
-  version: latest
-namespace: acme
+slices:
+  - namespace: acme
+    artifacts:
+      - payux-api
+      - id: payux-worker
+        version: latest
 ```
 
-**Example D — stack slice (mixed: default vs pinned)**
+**Example D — composite artifact via child fragment**
+
+Parent file:
 
 ```yaml
 esb: "0.1"
-namespace: acme
-components:
-  - { id: payux-api }
-  - { id: payux-worker, version: "1.2.3" }
+slices:
+  - namespace: open-ergo
+    artifacts:
+      - open-ergo-http-gateway
+      - id: open-ergo-auth
+        esb: slices/open-ergo-auth.esb.yaml
 ```
 
-**Example E — exceptional `depends_on` (only when catalog rules cannot imply the edge)**
+Child `slices/open-ergo-auth.esb.yaml`:
 
 ```yaml
 esb: "0.1"
-component:
-  id: edge-router
-  namespace: acme
-  depends_on:
-    - foreign-audit-sink
+artifacts:
+  - id: authcode-generator
+  - id: logout-router-orchestrator
+```
+
+**Example E — exceptional `depends_on`**
+
+```yaml
+esb: "0.1"
+slices:
+  - namespace: acme
+    artifacts:
+      - id: edge-router
+        depends_on:
+          - foreign-audit-sink
 ```
 
 ---

@@ -17,7 +17,7 @@
 
 | Rule | Detail |
 |------|---------|
-| **Lean YAML** | Only mechanical fields: **`esb`**, **`slices`**, **`namespace`**, **`components`**, **`id`**, optional **`version`**, and **`depends_on`** only when justified. |
+| **Lean YAML** | Only mechanical fields: **`esb`**, **`slices`**, **`namespace`**, **`artifacts`** (string or mapping with **`id`**, optional **`version`**, **`depends_on`**, **`esb`**), no narrative. |
 | **No “why”** | No `summary`, `product`, `meta` strategy, `#` comments, or docstrings in ESB YAML—those belong in **`EVALUATION.md`**, aspect docs, or applications. |
 | **Sparse `depends_on`** | Default **none**. Namespace + binding imply transport/capabilities (OpenErgo pattern); do not list the bus per component. Add `depends_on` only for **unambiguous** logical attachments the catalog cannot infer (rare). |
 
