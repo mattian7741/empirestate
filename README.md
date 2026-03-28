@@ -15,7 +15,7 @@ This folder contains documentation for the EmpireStack project. Primary librarie
 | **design/** | Redirect hub → `applications/` ([design/README.md](design/README.md)). |
 | **funcspec/** | Redirect hub → `applications/` ([funcspec/README.md](funcspec/README.md)). |
 | **concise/** | [concise/README.md](concise/README.md) — lean **infrastructure + strategy** summary; excludes app catalog. |
-| **esb-model/** | [esb-model/README.md](esb-model/README.md) — **ESB exercise**: ideal system intent in YAML; evaluates grammar before execution tooling exists. |
+| **esb-model/** | [esb-model/README.md](esb-model/README.md) — **ESB protocol** stress test (lean “what” YAML only); no product narrative in artifacts. |
 
 ## Consumption
 
@@ -25,7 +25,7 @@ This folder contains documentation for the EmpireStack project. Primary librarie
 - **applications/** — [applications/README.md](applications/README.md); read `FUNCSPEC.md` before `DESIGN.md` for the same app. Pair with [GUIDE.md](GUIDE.md).
 - **design/** / **funcspec/** — Short redirects to `applications/` for bookmarks.
 - **concise/** — Fast path: tenets, roadmap table, aspects, standards; platform only—[concise/README.md](concise/README.md).
-- **esb-model/** — Empire State Build modeling of ideal end-state; see [esb-model/README.md](esb-model/README.md).
+- **esb-model/** — ESB grammar stress test; see [esb-model/README.md](esb-model/README.md).
 
 ## Relationship
 
