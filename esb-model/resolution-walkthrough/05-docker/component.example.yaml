@@ -1,0 +1,15 @@
+name: authcode-generator
+namespace: circuit-leagues-bus
+library:
+  distribution: internal-pypi
+  package: empirestack-authcode
+  import_path: empirestack_authcode.handlers
+function: on_auth_request
+input_bindings:
+  - bus_topic: auth.request.v1
+output_bindings:
+  - bus_topic: authcode.delivery.v1
+input_sub_key: envelope.payload
+default_output_pub_key: authcode.out
+pre_operations: []
+post_operations: []

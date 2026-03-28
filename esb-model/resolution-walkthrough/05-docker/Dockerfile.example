@@ -1,0 +1,11 @@
+# EXAMPLE — image bundles runtime + SDK + released library + OpenErgo component YAML
+FROM python:3.12-slim
+
+RUN pip install --no-cache-dir \
+    empirestack-openergo-sdk==2.1.0 \
+    empirestack-authcode==1.4.2
+
+COPY component.example.yaml /etc/openergo/component.yaml
+
+ENV OPENERGO_COMPONENT_CONFIG=/etc/openergo/component.yaml
+CMD ["python", "-m", "openergo_sdk.worker"]

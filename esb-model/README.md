@@ -29,6 +29,9 @@
 | **`ideal-system.esb.yaml`** | Layered sample: **lay root** → **application system** → **web vs store** tokens vs **OpenErgo bundles** → **worker** leaves; **`platform-capabilities`** for logical managed-style tokens. |
 | **`definitions/`** | Optional: split-out **`id`** bodies when not inline as sibling **`domains`** rows (may be empty). |
 | **`EVALUATION.md`** | Baseline + gaps; not ESB content. |
+| **`resolution-walkthrough/`** | **End-to-end example:** one leaf (`authcode-generator`) from lay ESB → catalog → OpenErgo YAML → expanded spec → Ansible → Docker ([`resolution-walkthrough/README.md`](resolution-walkthrough/README.md)). |
+
+**Lay vs depth:** [`ideal-system.esb.yaml`](ideal-system.esb.yaml) stays **membership-only**. Lower layers live only under **`resolution-walkthrough/`** so grammars are not mixed.
 
 ---
 

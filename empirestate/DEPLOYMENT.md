@@ -96,7 +96,7 @@ ESB + environment (from invocation, not in ESB file)  →  expanded / normalized
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
-**Exercise:** A **protocol stress-test** lives under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md))—**lean YAML only**.
+**Exercise:** A **protocol stress-test** lives under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md))—**lean YAML only**. An **illustrative E2E chain** (catalog → OpenErgo config → expanded spec → Ansible → Docker) for a single leaf is under [`esb-model/resolution-walkthrough/`](../esb-model/resolution-walkthrough/README.md).
 
 ### Representative ESB examples (illustrative — for review)
 

@@ -1,0 +1,20 @@
+# EXAMPLE — post-merge artifact a realizer would consume (staging)
+logical_token: authcode-generator
+environment: staging
+deploy_kind: open-ergo-docker-worker
+resolved_context_key: circuit-leagues-bus-staging
+oci_image:
+  repository: registry.example.com/empirestack/authcode-generator
+  tag: "1.4.2"
+  digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+openergo:
+  component_path_in_container: /etc/openergo/component.yaml
+transport:
+  amqp_url: amqp://bus.example:5672/staging
+  vhost: staging
+  credentials_ref: vault:secret/data/bus/staging
+runtime:
+  log_level: INFO
+resources:
+  cpus: "0.5"
+  memory_mb: 512

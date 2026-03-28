@@ -1,0 +1,14 @@
+# EXAMPLE — logical token → implementation pointers (not a live catalog schema)
+logical_token: authcode-generator
+deploy_kind: open-ergo-docker-worker
+openergo_component_file: ../02-openergo/authcode-generator.component.example.yaml
+oci_image:
+  repository: registry.example.com/empirestack/authcode-generator
+  tag_policy: semver-from-release
+  example_tag: "1.4.2"
+binding:
+  logical_anchor: circuit-leagues-bus
+  resolved_context_pattern: "${logical_anchor}-${environment}"
+  notes: >-
+    Pipeline passes environment=staging|production; binding row supplies AMQP URL,
+    vhost, credentials, tuning — consumed when building expanded spec.

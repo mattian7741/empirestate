@@ -36,3 +36,9 @@
 - **Disambiguation** of “namespace”: OpenErgo network field vs lay **`domains`**.
 
 Folded into `empirestate/DEPLOYMENT.md` § **Bottom-up layers**.
+
+---
+
+## E2E resolution example
+
+Layered files (catalog → OpenErgo → expanded spec → Ansible → Docker) for token **`authcode-generator`**: [`resolution-walkthrough/README.md`](resolution-walkthrough/README.md).

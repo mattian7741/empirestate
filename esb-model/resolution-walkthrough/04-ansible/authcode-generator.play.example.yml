@@ -1,0 +1,24 @@
+# EXAMPLE — Ansible fragment; values mirror 03-expanded-spec (no runtime lookup in-doc)
+---
+- name: Converge authcode-generator worker (example)
+  hosts: ergo_workers
+  vars:
+    oci_repository: registry.example.com/empirestack/authcode-generator
+    oci_tag: "1.4.2"
+    amqp_url: amqp://bus.example:5672/staging
+    log_level: INFO
+  tasks:
+    - name: Ensure image is present locally
+      community.docker.docker_image:
+        name: "{{ oci_repository }}:{{ oci_tag }}"
+        source: pull
+    - name: Run worker container
+      community.docker.docker_container:
+        name: authcode-generator
+        image: "{{ oci_repository }}:{{ oci_tag }}"
+        recreate: true
+        env:
+          AMQP_URL: "{{ amqp_url }}"
+          LOG_LEVEL: "{{ log_level }}"
+        cpus: 0.5
+        memory: 512m
