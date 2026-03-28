@@ -185,6 +185,12 @@ A **deployment manifest** (or equivalent **machine-normalized** layer) lists the
 - **One vocabulary, many realizers:** **Bindings** supply **where**; **descriptors + manifests** supply **how** per kind; **ESB** must stay **agnostic** as new kinds appear.
 - **Naming collision:** **OpenErgo “namespace”** (logical bus network in component YAML) vs **lay `domains` / `id`** must stay **conceptually separate** in docs and tooling—same English word, different layers.
 
+### Realization posture (no mandated stack)
+
+The platform **does not** standardize on Kubernetes—or any **single** orchestrator, cloud, or runtime—as a **requirement**. **Lay ESB**, **catalog**, **bindings**, and **expanded spec** stay **portable intent**; nothing in them should **force** a K8s (or Nomad-only, or vendor-only) path.
+
+**Concrete execution** should use **off-the-shelf tools wherever they fit**: configuration management and convergence (e.g. Ansible), resource provisioning APIs (e.g. Terraform / OpenTofu, Pulumi), **OCI/Docker** where container runtimes apply, **CI** for builds, **provider CLIs** for app stores or managed SaaS—**chosen per deploy kind**, **replaceable** under the same expanded-spec contract. Custom glue (**expansion**, validation, orchestration of manifests) is for **bridging layers**, not for **re-implementing** what mature tools already solve well.
+
 ---
 
 ## Core Principles
