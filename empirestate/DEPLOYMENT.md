@@ -128,9 +128,9 @@ artifacts:
   - payux
 ```
 
-**Example C — token resolved by external definition**
+**Example C — recursive token: sibling `domains` entry (same file)**
 
-Parent `ideal.esb.yaml`:
+`open-ergo` lists the token **`open-ergo-auth`**; another **`domains`** row defines that **`id`** and its members:
 
 ```yaml
 esb: "0.1"
@@ -139,19 +139,13 @@ domains:
     artifacts:
       - open-ergo-http-gateway
       - open-ergo-auth
+  - id: open-ergo-auth
+    artifacts:
+      - authcode-generator
+      - logout-router-orchestrator
 ```
 
-Child `definitions/open-ergo-auth.esb.yaml` (definition **must** use the **same** string as its root **`id`**):
-
-```yaml
-esb: "0.1"
-id: open-ergo-auth
-artifacts:
-  - authcode-generator
-  - logout-router-orchestrator
-```
-
-**Lookup:** expander finds **`open-ergo-auth`** → document with **`id: open-ergo-auth`** (convention: definitions index, path rules, or catalog—**platform** choice).
+**Alternate:** the **`open-ergo-auth`** row can live in **`definitions/open-ergo-auth.esb.yaml`** (root **`id: open-ergo-auth`** + **`artifacts`**) instead—**same** lookup key, **platform** defines how files are indexed.
 
 ---
 

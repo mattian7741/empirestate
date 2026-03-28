@@ -15,5 +15,5 @@
 
 ## Protocol observations (ongoing)
 
-- **Lookup:** How the expander finds `open-ergo-auth` → file (path convention, index, monorepo service) is **tooling**—documented as platform choice in `DEPLOYMENT.md` Example C note.
+- **Lookup:** Token `open-ergo-auth` → definition with `id: open-ergo-auth` (sibling **`domains`** row in `ideal-system.esb.yaml`, or split file under `definitions/`—**tooling** picks the index).
 - Further structural feedback goes here until folded into `DEPLOYMENT.md`.

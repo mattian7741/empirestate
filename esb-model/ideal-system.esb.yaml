@@ -10,3 +10,7 @@ domains:
       - open-ergo-auth
       - open-ergo-senders
       - open-ergo-data
+  - id: open-ergo-auth
+    artifacts:
+      - authcode-generator
+      - logout-router-orchestrator
