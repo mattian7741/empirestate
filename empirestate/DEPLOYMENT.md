@@ -149,6 +149,44 @@ domains:
 
 ---
 
+## Bottom-up layers (implementation) vs lay ESB (organization)
+
+This section walks **up** from **code and packages** to **compound deployment** and **speech-level grouping**, so **concern boundaries** stay visible. **ESB** stays at the **top** of this stack: **membership and names**, not mechanism.
+
+### Example path: OpenErgo component → Docker image
+
+1. **Source** — Implementer writes code (e.g. a Python function) with **library dependencies** (e.g. packages from an index such as PyPI). That is **behavior**, not deployment vocabulary.
+2. **Library artifact** — The function (and its dependency closure) is **released** to an **artifact registry** (package index or internal equivalent). That **publication** is already a form of “deployment” of the **library**, separate from runtime orchestration.
+3. **OpenErgo component configuration** — A **YAML (or equivalent) descriptor** is the **logical OpenErgo component**: it names the component, ties it to the **OpenErgo logical network** (`namespace` / domain in the **OpenErgo** sense—not the lay ESB **`domains`** key), points at the **library** and **function**, and declares **input/output bindings**, **sub keys**, **default publish keys**, **pre/post operations**, etc. **Here** the injected function is **chosen behavior**; the **file** is the **component contract** for how that behavior runs **inside** the bus.
+4. **Runnable image (one packaging pathway)** — A **Docker image** (or OCI artifact) is built that **bundles** at least: the **released function/library layer**, the **OpenErgo SDK/runtime**, and the **component configuration**. The image is a **static, versioned deployable** for environments that run **containers**.
+5. **Other pathways** — **Docker is not the only deploy kind.** The same **logical** item might instead (or also) be described for **Google Play**, **Apple App Store**, **managed Postgres (e.g. Neon)**, **managed RabbitMQ (e.g. CloudAMQP)**, **static web**, **serverless**, etc. Each **kind** has its own **implementation descriptor** and **packaging/publish** steps; the **realizer** (Ansible or successor) closes the gap per kind.
+
+### Middle: deployment manifest (compound)
+
+A **deployment manifest** (or equivalent **machine-normalized** layer) lists the **logical elements** that participate in a **compound** deployment. **Names** in that manifest are **references** into **lower-level definitions**: OpenErgo component configs, image digests, store listing metadata, DB instance specs, broker subscriptions, etc. **Orchestration** (order, health, rollout) lives **at or below** this layer—not in the **lay** ESB string lists.
+
+### Top: lay ESB (speech-level grouping)
+
+**Empire State Build** sits **above** per-kind descriptors: it only says which **named systems** (`id` / domain) **include** which **artifact tokens** (strings), **recursively**, until tokens hit **terminals** resolved by **catalog + manifest + bindings**. It does **not** encode PyPI coordinates, OpenErgo binding keys, Docker layers, or Play Store SKUs.
+
+### Concern separation (summary)
+
+| Layer | Concern | Must **not** appear in lay ESB |
+|-------|---------|--------------------------------|
+| **Lay ESB** | Organization: **what belongs** to which **named system** | Per-kind mechanism |
+| **Manifest / expanded spec** | **Compound** set of logical deployables; **references** to lower configs | — |
+| **Implementation descriptor** | OpenErgo YAML, image metadata, store configs, **SaaS API** shapes, … | — |
+| **Package / registry artifact** | Immutable **published** thing (wheel, image, bundle id, …) | — |
+| **Source** | Code + deps | — |
+
+### Gaps to close (staging)
+
+- **Terminal typing:** When recursion stops, the expander must know each leaf token’s **deploy kind** (OpenErgo image, Neon DB, Play bundle, …)—via **catalog** or **manifest**, not via extra fields in the lay YAML.
+- **One vocabulary, many realizers:** **Bindings** supply **where**; **descriptors + manifests** supply **how** per kind; **ESB** must stay **agnostic** as new kinds appear.
+- **Naming collision:** **OpenErgo “namespace”** (logical bus network in component YAML) vs **lay `domains` / `id`** must stay **conceptually separate** in docs and tooling—same English word, different layers.
+
+---
+
 ## Core Principles
 
 ### Target Agnosticism from the Start
@@ -158,7 +196,7 @@ No part of the application or deployment depends on a specific provider, managed
 Everything required to run—services, networking, routing, configuration—is expressed in version-controlled files. No manual steps, no hidden state, no reliance on prior machine history. A fresh host must go from zero to fully operational using only the repository and a small set of external inputs (credentials, DNS, etc.).
 
 ### Containerization
-All services run in Docker containers with well-defined inputs and outputs. The container image is the unit of portability. If it runs locally, it runs unchanged on any target host that supports Docker.
+**Containerized** services run in Docker (or OCI) with well-defined inputs and outputs; the image is a common **unit of portability** for that path. **Other deliverable kinds** (app stores, managed DB/broker SaaS, static web, etc.) use **different** packaging and constraints; see **Bottom-up layers** above—**ESB** does not privilege Docker as the only abstract deployable.
 
 ### Separation of Concerns
 

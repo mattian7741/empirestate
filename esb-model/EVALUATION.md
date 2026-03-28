@@ -16,4 +16,23 @@
 ## Protocol observations (ongoing)
 
 - **Lookup:** Token `open-ergo-auth` → definition with `id: open-ergo-auth` (sibling **`domains`** row in `ideal-system.esb.yaml`, or split file under `definitions/`—**tooling** picks the index).
-- Further structural feedback goes here until folded into `DEPLOYMENT.md`.
+
+---
+
+## Bottom-up layering (OpenErgo and beyond)
+
+**Source:** function + PyPI-style deps → **library artifact** in registry → **OpenErgo component YAML** (logical component: name, **OpenErgo** network/domain, library/function, I/O bindings, keys, pre/post) → **Docker image** (library + SDK + config) as **one** deployable pathway.
+
+**Also:** non-Docker kinds (Play, App Store, Neon, CloudAMQP, …) each need **descriptor + realizer**; lay **ESB** stays **kind-agnostic**.
+
+**Middle:** deployment **manifest** references lower configs for compound deployments.
+
+**Top:** ESB = **groups + string tokens** only.
+
+### Gaps to close
+
+- **Leaf typing** in catalog when recursion stops (**deploy kind** per token).
+- **Manifest schema** vs ESB expansion boundary (what lives in **expanded spec** only).
+- **Disambiguation** of “namespace”: OpenErgo network field vs lay **`domains`**.
+
+Folded into `empirestate/DEPLOYMENT.md` § **Bottom-up layers**.
