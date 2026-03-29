@@ -42,6 +42,14 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **Definition problem (data-plane example):** **`user-data-store`** at the top means “where user contact/profile fields (email, phone, …) live” **without** committing to SQL, a file, P2P, or a vendor. At the bottom it must become, e.g., a **Postgres** connection target, **named database + schema**, **`user_account` (and related) tables**, and **seed rows** for static domains (e.g. **US State** if the model has that property). The **rows of the resolution matrix** in [`esb-model/resolution-matrix/README.md`](../esb-model/resolution-matrix/README.md) show how those layers hang together for one token.
 
+### Analogy (network stacks) and canonical layer count
+
+**Parallels (OSI / TCP/IP):** Refinement from **“what we mean”** to **“what actually runs on the wire”** is **similar in spirit** to stacked network models: upper levels stay **abstract**; lower levels add **addressing, framing, physical delivery**. **Differences:** Internet stacks are **standards** with **tight** peer contracts at each boundary; **ESB** tiers are **your** platform contracts; deploy paths are **more heterogeneous** (relational DB, mobile binary, message worker) than packets; some **tiers may be skipped** or **defaulted** when policy implies them.
+
+**Fixed number of layers — a reasonable goal if:** you define a **small, stable** set of **logical** tiers (on the order of **five to seven** names, not a magic OSI count) such that **every deployable kind** **maps** onto **the same slot sequence** at the **conceptual** level—while allowing **(a)** **skipped** steps with defaults, **(b)** **kind-specific** fields only in **allowed** slots (especially **terminal / expanded**), and **(c)** **polymorphic** concrete payloads (Postgres binding vs Play listing vs OCI image) **under** one shared **resolution** story.
+
+**Unreasonable if:** you require **one identical schema** at every step for all kinds; or you freeze **seven** steps because of the OSI metaphor rather than **minimal** tiers that **actually separate concerns** for *your* stack.
+
 ### ESB lay corpus (top layer)
 
 The **lay** grammar is **membership only**: **what** (conceptually) belongs to a **named system**—**groups and string tokens**, no mechanism. **How** and **where** are **not** in the lay file; they emerge from **lower ESB layers** (descriptors + **environment** + **bindings**).
