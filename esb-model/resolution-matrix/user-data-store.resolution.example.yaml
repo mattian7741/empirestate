@@ -1,0 +1,47 @@
+artifact_token: user-data-store
+description: EXAMPLE — progressive resolution layers (schema for tooling TBD)
+layers:
+  - step: 0
+    id: lay_membership
+    note: Declared only as string token under lay domain
+  - step: 1
+    id: logical_role
+    purpose: user_contact_and_profile_persistence
+    data_sensitivity: pii
+  - step: 2
+    id: persistence_class
+    model: relational
+    transactional: true
+  - step: 3
+    id: engine_family
+    sql_engine: postgresql
+    major_version_policy: "16"
+  - step: 4
+    id: topology
+    shape: single_managed_instance
+    ha: false
+  - step: 5
+    id: environment_binding
+    requires_environment: true
+    example_staging:
+      connection_string_ref: vault:kv/data/databases/user-store/staging
+      database_name: users_staging
+      schema: app_identity
+  - step: 6
+    id: schema_contract
+    primary_table: user_account
+    columns_policy_ref: platform/accessor-user-account-v1
+    supporting_tables:
+      - name: ref_us_state
+        role: static_domain
+        property_supported: us_state_code
+      - name: ref_country
+        role: static_domain
+        property_supported: country_code
+  - step: 7
+    id: static_domain_data
+    seeds:
+      ref_us_state:
+        source: reference_pack_geography_v1
+      ref_country:
+        source: reference_pack_geography_v1

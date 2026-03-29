@@ -1,44 +1,5 @@
 esb: "0.1"
 domains:
-  - id: ideal-lay-root
+  - id: example-product-slice
     artifacts:
-      - circuit-leagues-system
-      - open-ergo-plane
-      - platform-capabilities
-
-  - id: circuit-leagues-system
-    artifacts:
-      - circuit-leagues-web-surface
-      - circuit-leagues-store-android
-      - circuit-leagues-store-ios
-
-  - id: circuit-leagues-web-surface
-    artifacts:
-      - circuit-leagues-pwa
-      - circuit-leagues-consumption-api
-
-  - id: open-ergo-plane
-    artifacts:
-      - open-ergo-http-gateway
-      - open-ergo-auth-bundle
-      - open-ergo-senders-bundle
-      - open-ergo-data-bundle
-
-  - id: open-ergo-auth-bundle
-    artifacts:
-      - authcode-generator
-      - logout-router-orchestrator
-
-  - id: open-ergo-senders-bundle
-    artifacts:
-      - email-sender
-      - sms-sender
-
-  - id: open-ergo-data-bundle
-    artifacts:
-      - gp-data-persister
-
-  - id: platform-capabilities
-    artifacts:
-      - capability-message-transport
-      - capability-session-store
+      - user-data-store

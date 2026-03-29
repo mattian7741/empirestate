@@ -16,7 +16,7 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Named artifacts and implementation binding
 
-**Author-facing statements use names, not wiring.** At the **lay** layer, **ESB** names **domains** (systems you can point at in speech) and the **artifact tokens** that **belong** to each—**membership only**, not mechanism. Every token **resolves** to **more detail** (another **group definition** or a **terminal** handled by non-lay descriptors). **Bindings** map **resolved context** (**where** + **which environment**) + **how** to **concrete** targets.
+**Author-facing statements use names, not wiring.** **ESB** (full stack—see [Empire State Build](#empire-state-build-esb)) starts at the **lay** layer: **domains** (systems in speech) and **artifact tokens** that **belong** to each—**membership only**. Each token then **resolves** through **interim layers** to **concrete** targets; **bindings** map **resolved context** + **how** for a given **environment**.
 
 **`domain` / `id` vs `namespace`:** The ESB **group** key is **`id`** (under **`domains[]`**, or as the **root** of a one-group document). **`namespace`** in the Kubernetes / platform sense is an **implementation** concern—materialized in **binding rows**—not the primary word for **lay** grouping (unless a lower descriptor explicitly maps a domain to that runtime concept).
 
@@ -28,7 +28,7 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 | Layer | Says |
 |-------|------|
-| **Lay membership (ESB)** | This **domain `id`** **includes** these **artifact tokens** (string list only). |
+| **Lay membership (ESB top)** | This **domain `id`** **includes** these **artifact tokens** (string list only). |
 | **Resolved context + binding** | Invocation **environment** + catalog rules → **concrete** endpoints, secrets, profile, images, playbooks, generated files. |
 | **Execution** | Docker, Ansible, cloud APIs, etc.—**means**, not the lay definition. |
 
@@ -38,17 +38,23 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 ## Empire State Build (ESB)
 
-**Empire State Build (ESB)** is the **lay** grammar for **what** (conceptually) belongs to a **named system**—**groups and members only**. **How** things are deployed (mechanism, wiring, versions) and **where** they run (environment, concrete targets) are answered by **recursive descriptor resolution** and **bindings**, not by prose in the lay file.
+**ESB scope:** **Empire State Build (ESB)** is the **entire artifact-resolution system**, not only the top YAML file. It spans **all layers** that turn a **logical artifact** from an opaque, speech-level name into **concrete implementation facts**: interim steps fix **persistence class**, **engine**, **topology**, **schema**, **static reference data**, **credentials**, etc., until a **realizer** (Ansible, Terraform, provider API, …) can act. The **lay corpus** (below) is the **top** of ESB; **catalogs, manifests, bindings, and schemas** are **middle and bottom** of the **same** ESB story.
+
+**Definition problem (data-plane example):** **`user-data-store`** at the top means “where user contact/profile fields (email, phone, …) live” **without** committing to SQL, a file, P2P, or a vendor. At the bottom it must become, e.g., a **Postgres** connection target, **named database + schema**, **`user_account` (and related) tables**, and **seed rows** for static domains (e.g. **US State** if the model has that property). The **rows of the resolution matrix** in [`esb-model/resolution-matrix/README.md`](../esb-model/resolution-matrix/README.md) show how those layers hang together for one token.
+
+### ESB lay corpus (top layer)
+
+The **lay** grammar is **membership only**: **what** (conceptually) belongs to a **named system**—**groups and string tokens**, no mechanism. **How** and **where** are **not** in the lay file; they emerge from **lower ESB layers** (descriptors + **environment** + **bindings**).
 
 **Three deploy questions:**
 
-| Question | Where it is answered |
-|----------|----------------------|
-| **What** | ESB + linked definitions: **domain `id`**, **artifact tokens** (strings), expanded **recursively** until terminals. |
-| **How** | Lower-level descriptors, catalog, bindings—mechanism per token. |
-| **Where** | **Environment** at **invocation** + **binding** rows for **resolved context** → concrete stack. |
+| Question | Where it is answered (inside ESB) |
+|----------|-------------------------------------|
+| **What (opaque)** | **Lay corpus:** **domain `id`**, **artifact tokens** (strings); optional recursive **token → group** definitions. |
+| **What (refined)** | **Interim layers:** persistence model, engine family, topology, schema contracts, static-domain policies, … |
+| **How / where (concrete)** | **Bindings + expanded spec** after **environment** at invocation; then **realizers**. |
 
-**Principle:** A human **enumerates membership**: “this **named thing** includes these **named things**.” Each **artifact** entry is a **string token** that **uniquely identifies** another **definition** (more group structure or a terminal). **No** `id:` maps under **`artifacts`**—the list is **only** strings.
+**Principle (lay):** A human **enumerates membership**: “this **named thing** includes these **named things**.” Each **artifact** entry is a **string token** that **uniquely identifies** the **next** definition in the stack (another **group** in the lay corpus, or a **catalog** row that starts non-lay refinement). **No** `id:` maps under **`artifacts`**—the list is **only** strings.
 
 **Shape before semantics:** You can read the file **without** knowing what any token means. Expanders and catalogs **resolve** tokens to finer graphs until **how/where** apply.
 
@@ -59,19 +65,19 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 
 **Recursive resolution:**
 
-- Every token in **`artifacts`** **must** resolve to **exactly one** definition in the corpus: typically another **ESB** document whose root **`id`** **equals** that token and whose **`artifacts`** list further enumerates members—or a **non-lay** terminal record (catalog) that stops recursion.
+- Every token in **`artifacts`** **must** resolve to **exactly one** next step in the **ESB** stack: often another **lay** row (**`id`** match + child **`artifacts`**), or a **catalog / descriptor** entry that begins **non-lay** refinement (persistence class, engine, …).
 - **Expansion:** `x` resolves to `x`'s definition → `[a, b, c]` → each of `a,b,c` resolves again. **Cycles** are **invalid**.
 - **Speech-level bundles:** listing **`auth`** once can expand to many runnable pieces; the author does **not** flatten sub-pieces at this layer.
 
 **Schema version (`esb`):** Grammar/document version (e.g. `0.1`).
 
-**No “why” in ESB:** No comments, summaries, or strategy fields—only mechanical structure.
+**No “why” in lay corpus:** No comments, summaries, or strategy fields in **`.esb.yaml`** lay files—only mechanical structure.
 
 **Same corpus across environments:** **Environment** is **invocation**, never a field in the lay list.
 
 **Lay non-features:** Per-member **`id:` maps**, **`depends_on`**, **`version`**, and inline **`esb:`** file pointers on list items are **not** part of this enumerative model—linkage is **by token identity** → **definition lookup**. Edge cases belong in **lower descriptors** if they cannot be modeled as named groups.
 
-### Environment injection (outside ESB)
+### Environment injection (outside lay corpus)
 
 **Directive:** *Which environment* **must** be supplied for a deploy—but **not** inside the lay membership lists.
 
@@ -86,17 +92,17 @@ Infrastructure is **disposable**, not foundational. The system is the codebase a
 **Inference chain** (current stack direction):
 
 ```text
-ESB + environment (from invocation, not in ESB file)  →  expanded / normalized spec (machine-readable)  →  state realizer (e.g. Ansible)  →  concrete actions (Docker pull/run, files, systemd, APIs, …)  →  measured end state
+Lay corpus + interim ESB layers + environment (invocation)  →  expanded spec (machine-readable)  →  state realizer (e.g. Ansible, Terraform)  →  concrete actions  →  measured end state
 ```
 
 - **Ansible** (or successor) is the **deterministic state-realizing** layer today: idempotent tasks that close the gap between “what we declared” and “what is running.” It is an **implementation choice**, not the eternal definition—another engine could replace it if it honors the same **expanded spec** contract.
 - **Docker, bash, cloud APIs** sit **below** that layer: **means** to converge the host, not the vocabulary the human masters first.
 
-**Relationship to named artifacts:** Lay ESB names **domains** and **string tokens**; **every** token is a **key** into **more detail**. After expansion and **environment** injection, **bindings** supply **concrete** mechanism and targets; the realizer **consumes** the expanded result.
+**Relationship to named artifacts:** The **lay corpus** names **domains** and **string tokens**; **every** token is a **key** into **deeper ESB layers** (not only more lay groups). After refinement and **environment** injection, **bindings** supply **concrete** mechanism and targets; the realizer **consumes** the expanded result.
 
 **Non-goal:** A single giant schema on day one. Goal is **grammar discipline**—small surface, clear inference, audit trail from ESB through materialized artifacts.
 
-**Exercise:** A **protocol stress-test** lives under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md))—**lean YAML only**. An **illustrative E2E chain** (catalog → OpenErgo config → expanded spec → Ansible → Docker) for a single leaf is under [`esb-model/resolution-walkthrough/`](../esb-model/resolution-walkthrough/README.md).
+**Exercise:** Under **`esb-model/`** ([`esb-model/README.md`](../esb-model/README.md)): **lay** sample [`ideal-system.esb.yaml`](../esb-model/ideal-system.esb.yaml); **data-plane resolution matrix** ( **`user-data-store`** ) [`resolution-matrix/README.md`](../esb-model/resolution-matrix/README.md); **compute E2E** (OpenErgo worker → Ansible → Docker) [`resolution-walkthrough/README.md`](../esb-model/resolution-walkthrough/README.md).
 
 ### Representative ESB examples (illustrative — for review)
 
@@ -165,15 +171,15 @@ This section walks **up** from **code and packages** to **compound deployment** 
 
 A **deployment manifest** (or equivalent **machine-normalized** layer) lists the **logical elements** that participate in a **compound** deployment. **Names** in that manifest are **references** into **lower-level definitions**: OpenErgo component configs, image digests, store listing metadata, DB instance specs, broker subscriptions, etc. **Orchestration** (order, health, rollout) lives **at or below** this layer—not in the **lay** ESB string lists.
 
-### Top: lay ESB (speech-level grouping)
+### Top: ESB lay corpus (speech-level grouping)
 
-**Empire State Build** sits **above** per-kind descriptors: it only says which **named systems** (`id` / domain) **include** which **artifact tokens** (strings), **recursively**, until tokens hit **terminals** resolved by **catalog + manifest + bindings**. It does **not** encode PyPI coordinates, OpenErgo binding keys, Docker layers, or Play Store SKUs.
+The **lay corpus** sits **above** per-kind descriptors: it only says which **named systems** (`id` / domain) **include** which **artifact tokens** (strings), **recursively**, until tokens hand off to **catalog / manifest** for refinement. It does **not** encode PyPI coordinates, SQL dialects, Docker layers, or Play Store SKUs.
 
 ### Concern separation (summary)
 
 | Layer | Concern | Must **not** appear in lay ESB |
 |-------|---------|--------------------------------|
-| **Lay ESB** | Organization: **what belongs** to which **named system** | Per-kind mechanism |
+| **ESB lay corpus** | Organization: **what belongs** to which **named system** | Per-kind mechanism |
 | **Manifest / expanded spec** | **Compound** set of logical deployables; **references** to lower configs | — |
 | **Implementation descriptor** | OpenErgo YAML, image metadata, store configs, **SaaS API** shapes, … | — |
 | **Package / registry artifact** | Immutable **published** thing (wheel, image, bundle id, …) | — |

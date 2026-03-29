@@ -1,12 +1,12 @@
 # Resolution walkthrough — lay ESB → concrete stack (example)
 
-**Illustrative only.** One leaf from [`ideal-system.esb.yaml`](../ideal-system.esb.yaml) — **`authcode-generator`** — traced **down** through example descriptor layers until **Docker**. Real catalogs, schemas, and module names will differ; this shows **how layers hang together**, not production truth.
+**Illustrative only.** **`authcode-generator`** traced **down** through example layers until **Docker**. The repo’s **minimal** lay file is [`../ideal-system.esb.yaml`](../ideal-system.esb.yaml) (**`user-data-store`** only); this walkthrough keeps **`authcode-generator`** as a **fixed compute-path** example—treat it as listed under some domain in a fuller lay corpus. For a **data-path** matrix see [`../resolution-matrix/README.md`](../resolution-matrix/README.md).
 
 ## Layer chain (read in order)
 
 | Step | Layer | Role | File |
 |------|--------|------|------|
-| 0 | **Lay ESB** | *What* belongs to which named system (recursive string tokens). | [`../ideal-system.esb.yaml`](../ideal-system.esb.yaml) — `authcode-generator` under `open-ergo-auth-bundle` |
+| 0 | **Lay corpus** | *What* belongs to which named system (string token only). | Hypothetical listing of **`authcode-generator`**; compare [**`user-data-store`** lay sample](../ideal-system.esb.yaml) |
 | 1 | **Catalog / manifest** | Maps logical token → **deploy kind**, pointers to implementation artifacts, binding keys. | [`01-catalog/authcode-generator.resolve.example.yaml`](01-catalog/authcode-generator.resolve.example.yaml) |
 | 2 | **OpenErgo component config** | *How* the worker behaves on the bus: library, function, I/O bindings, logical **network** attachment (OpenErgo sense — disambiguated from lay **domain** elsewhere). | [`02-openergo/authcode-generator.component.example.yaml`](02-openergo/authcode-generator.component.example.yaml) |
 | 3 | **Expanded spec** | Machine-normalized merge of catalog + **environment** + bindings (what a realizer consumes). | [`03-expanded-spec/authcode-generator.expanded.example.yaml`](03-expanded-spec/authcode-generator.expanded.example.yaml) |

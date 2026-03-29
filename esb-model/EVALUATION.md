@@ -1,44 +1,27 @@
 # ESB exercise — evaluation notes
 
-**Objective:** Stress-test the **ESB protocol**—**groups (`id`) + string `artifacts` + recursive token definitions**—not any product.
+**Objective:** Stress-test **ESB** as the **full artifact-resolution stack** (see `empirestate/DEPLOYMENT.md`), with a minimal **lay** file and polished **examples** at lower layers.
 
 ---
 
 ## Baseline (established)
 
-1. **No “why” in ESB** — Mechanical fields only; narrative stays here or in aspect docs.
-2. **Three deploy questions** — **What** = lay ESB + definitions; **how** / **where** = descriptors + bindings + invocation (**`empirestate/DEPLOYMENT.md`**).
-3. **`domains` + string `artifacts` only** — No `- id:` maps under **`artifacts`**. Tokens resolve to definitions keyed by matching **`id`** (see **`definitions/`**).
-4. **`namespace` (K8s / runtime)** — Not the lay group key; lay groups use **`domain` / `id`**. Runtime **namespace** may appear only in **bindings** or lower descriptors.
+1. **ESB = whole stack** — Lay membership **plus** interim layers **plus** concrete binding/schema/seed data—not only `ideal-system.esb.yaml`.
+2. **Three deploy questions** — **What (opaque)** in lay corpus; **what (refined)** in interim descriptors; **how/where** in bindings + realizers.
+3. **Lay file** — **`domains`**, string **`artifacts`** only.
+4. **Disambiguation** — “Namespace” in OpenErgo/bus/runtime docs vs **lay `id` / domain** — see `DEPLOYMENT.md` gaps.
+
+---
+
+## Canonical examples
+
+| Artifact | Path | Role |
+|----------|------|------|
+| **`user-data-store`** | [`ideal-system.esb.yaml`](ideal-system.esb.yaml) + [`resolution-matrix/`](resolution-matrix/README.md) | **Data plane:** opaque store → relational/Postgres/schema/seeds. |
+| **`authcode-generator`** | [`resolution-walkthrough/`](resolution-walkthrough/README.md) | **Compute:** OpenErgo → Ansible → Docker. |
 
 ---
 
 ## Protocol observations (ongoing)
 
-- **Lookup:** Token → sibling **`domains`** row with matching **`id`** (all inline in `ideal-system.esb.yaml` today) or optional **`definitions/*.esb.yaml`**.
-
----
-
-## Bottom-up layering (OpenErgo and beyond)
-
-**Source:** function + PyPI-style deps → **library artifact** in registry → **OpenErgo component YAML** (logical component: name, **OpenErgo** network/domain, library/function, I/O bindings, keys, pre/post) → **Docker image** (library + SDK + config) as **one** deployable pathway.
-
-**Also:** non-Docker kinds (Play, App Store, Neon, CloudAMQP, …) each need **descriptor + realizer**; lay **ESB** stays **kind-agnostic**.
-
-**Middle:** deployment **manifest** references lower configs for compound deployments.
-
-**Top:** ESB = **groups + string tokens** only.
-
-### Gaps to close
-
-- **Leaf typing** in catalog when recursion stops (**deploy kind** per token).
-- **Manifest schema** vs ESB expansion boundary (what lives in **expanded spec** only).
-- **Disambiguation** of “namespace”: OpenErgo network field vs lay **`domains`**.
-
-Folded into `empirestate/DEPLOYMENT.md` § **Bottom-up layers**.
-
----
-
-## E2E resolution example
-
-Layered files (catalog → OpenErgo → expanded spec → Ansible → Docker) for token **`authcode-generator`**: [`resolution-walkthrough/README.md`](resolution-walkthrough/README.md).
+- Further structural feedback goes here until folded into `empirestate/DEPLOYMENT.md`.
